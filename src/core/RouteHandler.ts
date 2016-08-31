@@ -1,5 +1,6 @@
 import {Request} from "express";
 import {Response} from "express";
+import {Container} from "typescript-ioc";
 export class RouteHandler {
     private controller: Function;
     private handler: string;
@@ -12,23 +13,23 @@ export class RouteHandler {
         this.populateParameters();
     }
 
-    public async handleRequest(req: Request, res: Response, next: Function) {
-        let instance = Reflect.construct(this.controller, []);
+    public async handleRequest(req: Request, res: Response) {
+        //let instance = Reflect.construct(this.controller.constructor, []);
+        let instance = Container.get(this.controller.constructor);
         let handler = instance[this.handler];
 
         var params = this.populateRequestParameters(req);
-        let outputValue = await handler.apply(instance, params);
-        res.end(JSON.stringify(outputValue));
-
-        return new Promise<void>(resolve => {
-            next();
-            resolve();
-        });
+        try {
+            let outputValue = await handler.apply(instance, params);
+            res.end(JSON.stringify(outputValue));
+        } catch (e) {
+            res.status(500).end();
+        }
     }
 
     private populateParameters(): void {
-        let metadata = Reflect.getMetadata('design:paramtypes', this.controller.prototype, this.handler);
-        let names = getParameterNames(this.controller.prototype[this.handler]);
+        let metadata = Reflect.getMetadata('design:paramtypes', this.controller, this.handler);
+        let names = getParameterNames(this.controller[this.handler]);
 
         for (let i = 0; i < names.length; i++) {
             let info = {

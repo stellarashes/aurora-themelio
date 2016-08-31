@@ -18,8 +18,11 @@
     "lodash": "^4.15.0"
   },
   "devDependencies": {
+    "dotenv": "^2.0.0",
     "typescript": "^1.8.10",
     "typescript-ioc": "^0.2.4",
-    "typings": "^1.3.3"
+    "typings": "^1.3.3",
+    "tn-api": "git+ssh://git@github.com:cbdr/node_tn_api.git",
+    "member-services": "git+ssh://git@github.com:cbdr/TSEMemberServices.git"
   }
 }

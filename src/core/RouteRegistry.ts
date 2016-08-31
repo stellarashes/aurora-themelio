@@ -1,23 +1,20 @@
 import {Application} from "express";
 import {RouteHandler} from "./RouteHandler";
+const basePathMetaKey = 'controller:basePath';
+const handlerPathMetaKey = 'controller:handlePath';
+
 export class RouteRegistry {
-    private static basePaths = new Map<Function, string>();
-    private static handlerPaths = new Map<Function, Map<string, string>>();
     private static handlerMethods: RegistryEntry[] = [];
 
-    public static setControllerBasePath(controller: Function, path: string) {
-        RouteRegistry.basePaths.set(controller, path);
+    public static setControllerBasePath(controller: any, path: string) {
+        Reflect.defineMetadata(basePathMetaKey, path, controller);
     }
 
-    public static setHandlerPath(controller: Function, handler: string, path: string) {
-        if (!RouteRegistry.handlerPaths.has(controller)) {
-            RouteRegistry.handlerPaths.set(controller, new Map<string, string>());
-        }
-
-        RouteRegistry.handlerPaths.get(controller).set(handler, path);
+    public static setHandlerPath(controller: any, handler: string, path: string) {
+        Reflect.defineMetadata(handlerPathMetaKey, path, controller, handler);
     }
 
-    public static setHandlerMethod(controller: Function, handler: string, method: string) {
+    public static setHandlerMethod(controller: any, handler: string, method: string) {
         RouteRegistry.handlerMethods.push({
             controller: controller,
             handler: handler,
@@ -32,39 +29,28 @@ export class RouteRegistry {
             let listenMethod = app[route.method.toLowerCase()];
             let wrappedHandler = new RouteHandler(route.controller, route.handler);
 
-            listenMethod.call(app, fullPath, (req, res, next) => {
-                return wrappedHandler.handleRequest(req, res, next);
+            listenMethod.call(app, fullPath, (req, res) => {
+                return wrappedHandler.handleRequest(req, res);
             });
         }
     }
 
-    private static getHandlerFullPath(controller: Function, handler: string) {
+    private static getHandlerFullPath(controller: any, handler: string) {
         return RouteRegistry.getBasePath(controller) + RouteRegistry.getHandlerPath(controller, handler);
     }
 
-    private static getBasePath(controller: Function) {
-        if (RouteRegistry.basePaths.has(controller)) {
-            return RouteRegistry.basePaths.get(controller);
-        }
-
-        return '';
+    private static getBasePath(controller: any) {
+        return Reflect.getMetadata(basePathMetaKey, controller) || '';
     }
 
     private static getHandlerPath(controller: Function, handler: string) {
-        if (RouteRegistry.handlerPaths.has(controller)) {
-            let controllerHandlerPaths = RouteRegistry.handlerPaths.get(controller);
-            if (controllerHandlerPaths.has(handler)) {
-                return controllerHandlerPaths.get(handler);
-            }
-        }
-
-        return '';
+        return Reflect.getMetadata(handlerPathMetaKey, controller, handler) || '';
     }
 }
 
 
 interface RegistryEntry {
-    controller: Function;
+    controller: any;
     handler: string;
     method: string;
 }
