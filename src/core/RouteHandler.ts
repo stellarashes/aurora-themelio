@@ -16,14 +16,17 @@ export class RouteHandler {
         let instance = Reflect.construct(this.controller, []);
         let handler = instance[this.handler];
 
+        var params = this.populateRequestParameters(req);
+        let outputValue = await handler.apply(instance, params);
+        res.end(JSON.stringify(outputValue));
 
-        console.log(req.query);
-        let outputValue = await handler.call(instance);
-        res.end(outputValue);
-        next();
+        return new Promise<void>(resolve => {
+            next();
+            resolve();
+        });
     }
 
-    private populateParameters() {
+    private populateParameters(): void {
         let metadata = Reflect.getMetadata('design:paramtypes', this.controller.prototype, this.handler);
         let names = getParameterNames(this.controller.prototype[this.handler]);
 
@@ -34,6 +37,28 @@ export class RouteHandler {
             };
             this.parameters.push(info);
         }
+    }
+
+    private populateRequestParameters(req: Request): any[] {
+        let params = [];
+
+        for (let param of this.parameters) {
+            params.push(RouteHandler.populateRequestParameter(req, param));
+        }
+
+        return params;
+    }
+
+    private static populateRequestParameter(req: Request, param: ParamInfo) {
+        if (req.params.hasOwnProperty(param.name)) {
+            return req.params[param.name];
+        }
+
+        if (req.query.hasOwnProperty(param.name)) {
+            return req.query[param.name];
+        }
+
+        return undefined;
     }
 }
 
