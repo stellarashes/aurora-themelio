@@ -1,20 +1,70 @@
-import {AutoWired} from "typescript-ioc";
-
-@AutoWired
+import {Application} from "express";
+import {RouteHandler} from "./RouteHandler";
 export class RouteRegistry {
-    private registry: { [key: string]: { [method: string]: RegistryEntry } };
+    private static basePaths = new Map<Function, string>();
+    private static handlerPaths = new Map<Function, Map<string, string>>();
+    private static handlerMethods: RegistryEntry[] = [];
 
-    public addRoute(path, controller, handler, method) {
-        var registryEntry = new RegistryEntry();
-        registryEntry.controller = controller;
-        registryEntry.handler = handler;
-        registryEntry.method = method;
-        this.registry[path][method] = registryEntry;
+    public static setControllerBasePath(controller: Function, path: string) {
+        RouteRegistry.basePaths.set(controller, path);
+    }
+
+    public static setHandlerPath(controller: Function, handler: string, path: string) {
+        if (!RouteRegistry.handlerPaths.has(controller)) {
+            RouteRegistry.handlerPaths.set(controller, new Map<string, string>());
+        }
+
+        RouteRegistry.handlerPaths.get(controller).set(handler, path);
+    }
+
+    public static setHandlerMethod(controller: Function, handler: string, method: string) {
+        RouteRegistry.handlerMethods.push({
+            controller: controller,
+            handler: handler,
+            method: method
+        });
+    }
+
+    public static registerRoutesToApp(app: Application) {
+        for (let route of RouteRegistry.handlerMethods) {
+            // keep in mind route.controller is the constructor function to the controller
+            let fullPath = RouteRegistry.getHandlerFullPath(route.controller, route.handler);
+            let listenMethod = app[route.method.toLowerCase()];
+            let wrappedHandler = new RouteHandler(route.controller, route.handler);
+
+            listenMethod.call(app, fullPath, (req, res, next) => {
+                return wrappedHandler.handleRequest(req, res, next);
+            });
+        }
+    }
+
+    private static getHandlerFullPath(controller: Function, handler: string) {
+        return RouteRegistry.getBasePath(controller) + RouteRegistry.getHandlerPath(controller, handler);
+    }
+
+    private static getBasePath(controller: Function) {
+        if (RouteRegistry.basePaths.has(controller)) {
+            return RouteRegistry.basePaths.get(controller);
+        }
+
+        return '';
+    }
+
+    private static getHandlerPath(controller: Function, handler: string) {
+        if (RouteRegistry.handlerPaths.has(controller)) {
+            let controllerHandlerPaths = RouteRegistry.handlerPaths.get(controller);
+            if (controllerHandlerPaths.has(handler)) {
+                return controllerHandlerPaths.get(handler);
+            }
+        }
+
+        return '';
     }
 }
 
-class RegistryEntry {
-    public controller;
-    public handler;
-    public method;
+
+interface RegistryEntry {
+    controller: Function;
+    handler: string;
+    method: string;
 }

@@ -1,29 +1,14 @@
-let basePaths = {};
-let handlerPaths = {};
-let pathToHandlers = {};
 
+
+import {RouteRegistry} from "../core/RouteRegistry";
 export function Path(path: string) {
     path = padPath(path);
     return function(target: any, key?: string, value?: any): any {
         if (target instanceof Function) {
-            if (!handlerPaths.hasOwnProperty(target)) {
-                handlerPaths[target] = {};
-            }
-
-            handlerPaths[target][key] = path;
+            RouteRegistry.setControllerBasePath(target, path);
         } else {
-            basePaths[target] = path;
-
-
+            RouteRegistry.setHandlerPath(target.constructor, key, path);
         }
-    }
-}
-
-function finishMapping() {
-    let controllers = _.merge(_.keys(basePaths), _.keys(pathToHandlers));
-
-    for (let controller of controllers) {
-
     }
 }
 
