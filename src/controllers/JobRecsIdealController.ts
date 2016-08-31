@@ -3,8 +3,8 @@ import {Path} from "../decorators/Path";
 import {CBOAuthService} from "../services/CBOAuthService";
 import {Inject, AutoWired} from "typescript-ioc";
 
-@Path('/member/recs')
 @AutoWired
+@Path('/member/recs')
 export class JobRecsIdealController {
     @Inject private oauth: CBOAuthService;
 
@@ -17,11 +17,6 @@ export class JobRecsIdealController {
 
     @Path('/info/:memberDID') @GET
     public async testInfo(memberDID: string) {
-        return this.oauth.get('/member/blahblah/' + memberDID);
+        return this.oauth.get('/member/' + memberDID);
     }
-
-    public test() {
-        console.log(!!this.oauth);
-    }
-
 }
