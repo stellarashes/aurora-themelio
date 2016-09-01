@@ -21,7 +21,7 @@ export class RouteHandler {
         var params = this.populateRequestParameters(req);
         try {
             let outputValue = await handler.apply(instance, params);
-            res.end(JSON.stringify(outputValue));
+            res.json(outputValue);
         } catch (e) {
             console.error(e);
             res.status(500).end();
