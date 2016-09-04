@@ -15,7 +15,8 @@
   "homepage": "https://bitbucket.org/stellarashes/ts-chassis#readme",
   "dependencies": {
     "express": "^4.14.0",
-    "lodash": "^4.15.0"
+    "lodash": "^4.15.0",
+    "recursive-readdir": "^2.0.0"
   },
   "devDependencies": {
     "dotenv": "^2.0.0",

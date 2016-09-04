@@ -1,11 +1,13 @@
+import {ControllerInitializer} from "./ControllerInitializer";
 require('dotenv').config({
     path: '../.env'
 });
 
-import {JobRecsIdealController} from "./controllers/JobRecsIdealController";
 import {ExpressApp} from "./core/ExpressApp";
 
-var controller = new JobRecsIdealController();
-
-var app = new ExpressApp();
-app.start();
+var initializer = new ControllerInitializer();
+initializer.initialize()
+    .then(function() {
+        var app = new ExpressApp();
+        app.start();
+    });
