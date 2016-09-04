@@ -24,7 +24,6 @@ export class RouteRegistry {
 
     public static registerRoutesToApp(app: Application) {
         for (let route of RouteRegistry.handlerMethods) {
-            // keep in mind route.controller is the constructor function to the controller
             let fullPath = RouteRegistry.getHandlerFullPath(route.controller, route.handler);
             let listenMethod = app[route.method.toLowerCase()];
             let wrappedHandler = new RouteHandler(route.controller, route.handler);

@@ -1,9 +1,9 @@
-import {ControllerInitializer} from "./ControllerInitializer";
 require('dotenv').config({
     path: '../.env'
 });
 
 import {ExpressApp} from "./core/ExpressApp";
+import {ControllerInitializer} from "./ControllerInitializer";
 
 var initializer = new ControllerInitializer();
 initializer.initialize()

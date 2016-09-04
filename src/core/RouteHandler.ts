@@ -1,20 +1,43 @@
 import {Request} from "express";
 import {Response} from "express";
-import {Container} from "typescript-ioc";
+import {Container, Inject, AutoWired} from "typescript-ioc";
+import {GUID} from "./util/GUID";
+import {CacheService} from "./cache/CacheService";
+
+const metaCacheKey = 'controller:cache-guid';
+const metaCacheDuration = 'controller:cache-duration';
+
+@AutoWired
 export class RouteHandler {
     private controller: Function;
     private handler: string;
     private parameters: ParamInfo[] = [];
+    @Inject private cacheService: CacheService;
 
-    constructor(controllerConstructor: Function, handler: string) {
-        this.controller = controllerConstructor;
+    public static META_CACHE_KEY = metaCacheKey;
+    public static META_CACHE_DURATION = metaCacheDuration;
+
+    constructor(controller: Function, handler: string) {
+        this.controller = controller;
         this.handler = handler;
 
         this.populateParameters();
     }
 
     public async handleRequest(req: Request, res: Response) {
-        //let instance = Reflect.construct(this.controller.constructor, []);
+        let shouldCache = Reflect.hasMetadata(metaCacheKey, this.controller, this.handler);
+        let cacheKey = '';
+
+        if (shouldCache) {
+            cacheKey = Reflect.getMetadata(metaCacheKey, this.controller, this.handler);
+            let isCached = await this.cacheService.exists(cacheKey);
+            if (isCached) {
+                let cachedData = await this.cacheService.get(cacheKey);
+                res.end('Cached:' + cachedData);
+                return;
+            }
+        }
+
         let instance = Container.get(this.controller.constructor);
         let handler = instance[this.handler];
 
@@ -22,6 +45,11 @@ export class RouteHandler {
         try {
             let outputValue = await handler.apply(instance, params);
             res.json(outputValue);
+
+            if (shouldCache) {
+                let cacheData = JSON.stringify(outputValue);
+                await this.cacheService.set(cacheKey, cacheData);
+            }
         } catch (e) {
             console.error(e);
             res.status(500).end();
@@ -51,7 +79,7 @@ export class RouteHandler {
         return params;
     }
 
-    private static populateRequestParameter(req: Request, param: ParamInfo) {
+    private populateRequestParameter(req: Request, param: ParamInfo) {
         if (req.params.hasOwnProperty(param.name)) {
             return req.params[param.name];
         }
@@ -62,6 +90,8 @@ export class RouteHandler {
 
         return undefined;
     }
+
+
 }
 
 interface ParamInfo {
