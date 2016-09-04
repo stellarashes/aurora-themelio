@@ -3,9 +3,9 @@ require('dotenv').config({
 });
 
 import {ExpressApp} from "./core/ExpressApp";
-import {ControllerInitializer} from "./ControllerInitializer";
+import {ClassScanner} from "./ClassScanner";
 
-var initializer = new ControllerInitializer();
+var initializer = new ClassScanner();
 initializer.initialize()
     .then(function() {
         var app = new ExpressApp();

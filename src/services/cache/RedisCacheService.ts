@@ -8,6 +8,11 @@ import {RedisClient} from "redis";
 export class RedisCacheService extends CacheService {
     private client: RedisClient = null;
 
+    constructor() {
+        super();
+        this.init();
+    }
+
     async exists(key: string): Promise<any> {
         return this.wrap(this.client.exists, [key]);
     }

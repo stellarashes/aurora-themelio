@@ -7,6 +7,7 @@ export class ExpressApp {
 
     constructor() {
         this.app = express();
+        this.app.disable('x-powered-by');
     }
 
     public start() {

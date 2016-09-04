@@ -2,47 +2,46 @@ import {Request} from "express";
 import {Response} from "express";
 import {Container, Inject, AutoWired} from "typescript-ioc";
 import {GUID} from "./util/GUID";
-import {CacheService} from "./cache/CacheService";
+import {CacheService} from "../services/cache/CacheService";
 
 const metaCacheKey = 'controller:cache-guid';
 const metaCacheDuration = 'controller:cache-duration';
 
-@AutoWired
 export class RouteHandler {
     private controller: Function;
     private handler: string;
     private parameters: ParamInfo[] = [];
     @Inject private cacheService: CacheService;
 
-    public static META_CACHE_KEY = metaCacheKey;
-    public static META_CACHE_DURATION = metaCacheDuration;
-
     constructor(controller: Function, handler: string) {
         this.controller = controller;
         this.handler = handler;
+        this.cacheService = Container.get(CacheService);
 
         this.populateParameters();
     }
 
     public async handleRequest(req: Request, res: Response) {
-        let shouldCache = Reflect.hasMetadata(metaCacheKey, this.controller, this.handler);
-        let cacheKey = '';
-
-        if (shouldCache) {
-            cacheKey = Reflect.getMetadata(metaCacheKey, this.controller, this.handler);
-            let isCached = await this.cacheService.exists(cacheKey);
-            if (isCached) {
-                let cachedData = await this.cacheService.get(cacheKey);
-                res.end('Cached:' + cachedData);
-                return;
-            }
-        }
-
-        let instance = Container.get(this.controller.constructor);
-        let handler = instance[this.handler];
-
-        var params = this.populateRequestParameters(req);
         try {
+            let instance = Container.get(this.controller.constructor);
+            let handler = instance[this.handler];
+
+            var params = this.populateRequestParameters(req);
+
+            let shouldCache = Reflect.hasMetadata(metaCacheKey, this.controller, this.handler);
+            let cacheKey = '';
+
+            if (shouldCache) {
+                cacheKey = Reflect.getMetadata(metaCacheKey, this.controller, this.handler) + JSON.stringify(params);
+                let isCached = await this.cacheService.exists(cacheKey);
+                if (isCached) {
+                    let cachedData = await this.cacheService.get(cacheKey);
+                    res.header('X-Cache', 'HIT from application');
+                    res.end(cachedData);
+                    return;
+                }
+            }
+
             let outputValue = await handler.apply(instance, params);
             res.json(outputValue);
 
@@ -79,7 +78,7 @@ export class RouteHandler {
         return params;
     }
 
-    private populateRequestParameter(req: Request, param: ParamInfo) {
+    private static populateRequestParameter(req: Request, param: ParamInfo) {
         if (req.params.hasOwnProperty(param.name)) {
             return req.params[param.name];
         }
@@ -89,6 +88,11 @@ export class RouteHandler {
         }
 
         return undefined;
+    }
+
+    public static setCacheDuration(controller: any, handler: string, seconds: number) {
+        Reflect.defineMetadata(metaCacheKey, 'controller' + GUID.getGUID(), controller, handler);
+        Reflect.defineMetadata(metaCacheDuration, seconds, controller, handler);
     }
 
 
@@ -104,8 +108,8 @@ let ARGUMENT_NAMES = /([^\s,]+)/g;
 
 function getParameterNames(func: Function) {
     let fnStr = func.toString().replace(STRIP_COMMENTS, '');
-    let result = fnStr.slice(fnStr.indexOf('(')+1, fnStr.indexOf(')')).match(ARGUMENT_NAMES);
-    if(result === null)
+    let result = fnStr.slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')')).match(ARGUMENT_NAMES);
+    if (result === null)
         result = [];
     return result;
 }
