@@ -3,7 +3,7 @@ import {Path} from "../decorators/Path";
 import {Cache} from "../decorators/Cache";
 export class TestController {
     @Path('/') @GET
-    @Cache(60)
+    @Cache(3)
     public test() {
         return 'test';
     }

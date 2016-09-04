@@ -47,6 +47,9 @@ export class RouteHandler {
             if (shouldCache) {
                 let cacheData = JSON.stringify(outputValue);
                 await this.cacheService.set(cacheKey, cacheData);
+
+                let cacheDuration = Reflect.getMetadata(metaCacheDuration, this.controller, this.handler);
+                await this.cacheService.expire(cacheKey, cacheDuration);
             }
         } catch (e) {
             console.error(e);
