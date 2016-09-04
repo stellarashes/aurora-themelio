@@ -1,6 +1,5 @@
-import {Request} from "express";
-import {Response} from "express";
-import {Container, Inject, AutoWired} from "typescript-ioc";
+import {Request, Response} from "express";
+import {Container} from "typescript-ioc";
 import {GUID} from "./util/GUID";
 import {CacheService} from "../services/cache/CacheService";
 
@@ -11,7 +10,7 @@ export class RouteHandler {
     private controller: Function;
     private handler: string;
     private parameters: ParamInfo[] = [];
-    @Inject private cacheService: CacheService;
+    private cacheService: CacheService;
 
     constructor(controller: Function, handler: string) {
         this.controller = controller;
