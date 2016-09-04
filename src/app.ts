@@ -1,7 +1,3 @@
-require('dotenv').config({
-    path: '../.env'
-});
-
 import {ExpressApp} from "./core/ExpressApp";
 import {ClassScanner} from "./ClassScanner";
 

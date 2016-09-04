@@ -1,8 +1,9 @@
 import * as rr from "recursive-readdir";
+import {SiteConfig} from "./SiteConfig";
 
 export class ClassScanner {
     public async initialize() {
-        let scanPathsString = process.env.SCAN_PATHS || './controllers,./services';
+        let scanPathsString = SiteConfig.ScanPaths;
         let scanPaths = scanPathsString.split(',');
         return Promise.all(
             scanPaths.map(this.scanForPath)

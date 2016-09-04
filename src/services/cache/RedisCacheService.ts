@@ -2,6 +2,7 @@ import {CacheService} from "./CacheService";
 import {Provides, Singleton} from "typescript-ioc";
 import * as redis from "redis";
 import {RedisClient} from "redis";
+import {SiteConfig} from "../../SiteConfig";
 
 @Singleton
 @Provides(CacheService)
@@ -48,8 +49,8 @@ export class RedisCacheService extends CacheService {
     private init() {
         if (this.client === null) {
             this.client = redis.createClient({
-                host: process.env.CACHE_HOST || '127.0.0.1',
-                port: process.env.CACHE_PORT || 6379
+                host: SiteConfig.CacheHost,
+                port: SiteConfig.CachePort
             });
         }
     }

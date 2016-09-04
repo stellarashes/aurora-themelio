@@ -1,6 +1,7 @@
 import * as express from 'express';
 import {Application} from "express";
 import {RouteRegistry} from "./RouteRegistry";
+import {SiteConfig} from "../SiteConfig";
 
 export class ExpressApp {
     private app: Application;
@@ -12,7 +13,7 @@ export class ExpressApp {
 
     public start() {
         RouteRegistry.registerRoutesToApp(this.app);
-        let port = process.env.PORT || 3000;
+        let port = SiteConfig.SitePort;
         this.app.listen(port);
     }
 }
