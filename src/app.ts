@@ -4,10 +4,8 @@ import {DatabaseConnector} from "./core/data/DatabaseConnector";
 
 
 async function start() {
-    DatabaseConnector.connect();
-
-    var initializer = new ClassScanner();
-    await initializer.initialize();
+    DatabaseConnector.initialize();
+    await ClassScanner.initialize();
     await DatabaseConnector.sync();
     var app = new ExpressApp();
     app.start();

@@ -2,7 +2,7 @@ import * as rr from "recursive-readdir";
 import {SiteConfig} from "./SiteConfig";
 
 export class ClassScanner {
-    public async initialize() {
+    public static async initialize() {
         let scanPathsString = SiteConfig.ScanPaths;
         let scanPaths = scanPathsString.split(',');
         return Promise.all(
@@ -10,7 +10,7 @@ export class ClassScanner {
         );
     }
 
-    private async scanForPath(path: string) {
+    private static async scanForPath(path: string) {
         return new Promise<void>((resolve, reject) => {
             rr(path, ['!*.js'], (err, files) => {
                 if (err) {

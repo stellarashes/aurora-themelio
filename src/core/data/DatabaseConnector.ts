@@ -6,7 +6,7 @@ import {DataModel} from "./DataModel";
 export class DatabaseConnector {
     private static instance: Sequelize;
 
-    public static connect() {
+    public static initialize() {
         this.instance = new Sequelize(SiteConfig.DatabaseSchema, SiteConfig.DatabaseUser, SiteConfig.DatabasePass, {
             host: SiteConfig.DatabaseHost,
             port: SiteConfig.DatabasePort,
