@@ -1,8 +1,7 @@
-let lib = require('guid');
+let lib = require('node-uuid');
 
 export class GUID {
     public static getGUID(): string {
-        let guid = lib.create();
-        return guid.value;
+        return lib.v4();
     }
 }
