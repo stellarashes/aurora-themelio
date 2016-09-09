@@ -1,5 +1,5 @@
 import * as rr from "recursive-readdir";
-import {SiteConfig} from "./SiteConfig";
+import {SiteConfig} from "../SiteConfig";
 
 export class ClassScanner {
     public static async initialize() {
