@@ -1,5 +1,6 @@
 import * as rr from "recursive-readdir";
 import {SiteConfig} from "../SiteConfig";
+import * as fs from "fs";
 
 export class ClassScanner {
     public static async initialize() {
@@ -12,16 +13,23 @@ export class ClassScanner {
 
     private static async scanForPath(path: string) {
         return new Promise<void>((resolve, reject) => {
-            rr(path, ['!*.js'], (err, files) => {
+            fs.stat(path, (err, stats) => {
                 if (err) {
                     reject(err);
                 }
+                else if (stats.isDirectory()) {
+                    rr(path, ['!*.js'], (err, files) => {
+                        if (err) {
+                            reject(err);
+                        }
 
-                for (let file of files) {
-                    require('./' + file);
+                        for (let file of files) {
+                            require('./' + file);
+                        }
+
+                        resolve();
+                    });
                 }
-
-                resolve();
             });
         });
     }

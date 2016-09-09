@@ -10,3 +10,5 @@ export async function start() {
     var app = new ExpressApp();
     app.start();
 }
+
+start();
