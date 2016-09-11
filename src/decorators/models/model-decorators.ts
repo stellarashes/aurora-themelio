@@ -1,6 +1,7 @@
 import {DataTypes, ModelAttributeColumnOptions, ModelOptions, ModelAttributes} from "sequelize";
 import {DatabaseConnector} from "../../core/data/DatabaseConnector";
 import {DataModel} from "../../core/data/DataModel";
+import {SiteConfig} from "../../SiteConfig";
 
 const metaKey = Symbol('data:property-attributes');
 
@@ -36,6 +37,26 @@ function getDataTypeByPropertyType(target, key, propertyType) {
 export function Table(options?: ModelOptions) {
     return function (target: typeof DataModel) {
         let columnOptions: ModelAttributes = Reflect.getMetadata(metaKey, target.prototype) || {};
+        columnOptions = addPKIfMissingAndEnabled(columnOptions);
         DatabaseConnector.defineType(target, options || {}, columnOptions);
     };
+}
+
+function addPKIfMissingAndEnabled(columnOptions: ModelAttributes) {
+    if (SiteConfig.DatabaseModelDefaultPK) {
+        let hasPK = false;
+        for (let key in columnOptions) {
+            let option: any = columnOptions[key];
+            if (option && option.primaryKey) {
+                hasPK = true;
+                break;
+            }
+        }
+
+        if (!hasPK) {
+            columnOptions[SiteConfig.DatabaseDefaultPKName] = SiteConfig.DatabaseDefaultPKOptions;
+        }
+    }
+
+    return columnOptions;
 }

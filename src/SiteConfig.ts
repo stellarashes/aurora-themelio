@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import {DataTypes, ModelAttributeColumnOptions} from "sequelize";
 
 if (!process.env.NODE_ENV) {
     let filePath = process.env.ENV_PATH || '../.env';
@@ -23,4 +24,12 @@ export class SiteConfig {
     public static DatabaseDialect: 'mysql'|'mariadb'|'sqlite'|'postgres'|'mssql' = 'mysql';
     public static DatabaseSync: boolean = typeof(process.env.DB_SYNC) !== 'undefined' ? process.env.DB_SYNC : process.env.NODE_ENV === 'development';
     public static DatabaseLog: Function = process.env.NODE_ENV === 'development' ? console.log : null;
+
+    public static DatabaseModelDefaultPK: boolean = true;
+    public static DatabaseDefaultPKName: string = 'id';
+    public static DatabaseDefaultPKOptions: string | DataTypes.DataType | ModelAttributeColumnOptions = {
+        primaryKey: true,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4
+    };
 }

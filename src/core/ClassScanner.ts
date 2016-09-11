@@ -3,7 +3,7 @@ import {SiteConfig} from "../SiteConfig";
 import * as fs from "fs";
 
 export class ClassScanner {
-    public static async initialize() {
+    public static async initialize(): Promise<any> {
         let scanPathsString = SiteConfig.ScanPaths;
         let scanPaths = scanPathsString.split(',');
         return Promise.all(
@@ -11,11 +11,16 @@ export class ClassScanner {
         );
     }
 
-    private static async scanForPath(path: string) {
+    private static async scanForPath(path: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
+            let cwd = process.cwd();
             fs.stat(path, (err, stats) => {
                 if (err) {
-                    reject(err);
+                    if (err.code === 'ENOENT') {
+                        resolve();
+                    } else {
+                        reject(err);
+                    }
                 }
                 else if (stats.isDirectory()) {
                     rr(path, ['!*.js'], (err, files) => {
@@ -24,7 +29,7 @@ export class ClassScanner {
                         }
 
                         for (let file of files) {
-                            require('./' + file);
+                            require(cwd + '/' + file);
                         }
 
                         resolve();

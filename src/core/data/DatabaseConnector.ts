@@ -6,13 +6,15 @@ import {DataModel} from "./DataModel";
 export class DatabaseConnector {
     private static instance: Sequelize;
 
-    public static initialize() {
+    public static async initialize() {
         this.instance = new Sequelize(SiteConfig.DatabaseSchema, SiteConfig.DatabaseUser, SiteConfig.DatabasePass, {
             host: SiteConfig.DatabaseHost,
             port: SiteConfig.DatabasePort,
             dialect: SiteConfig.DatabaseDialect,
             logging: SiteConfig.DatabaseLog,
         });
+
+        return Promise.resolve();
     }
 
     public static defineType(model: typeof DataModel, options: any, columnOptions: ModelAttributes) {
