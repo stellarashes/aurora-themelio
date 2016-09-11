@@ -42,6 +42,10 @@ export function Table(options?: ModelOptions) {
     };
 }
 
+export function getModelAttributes(source) {
+    return Reflect.getMetadata(metaKey, source);
+}
+
 function addPKIfMissingAndEnabled(columnOptions: ModelAttributes) {
     if (SiteConfig.DatabaseModelDefaultPK) {
         let hasPK = false;
