@@ -8,7 +8,8 @@ export * from "./services/cache/CacheService";
 export * from "./SiteConfig";
 export * from "./decorators";
 export * from "./queues/Queue";
-export * from "./queues/DatabaseQueue";
+export * from "./queues/SimpleDatabaseQueue";
+export * from "./queues/ObjectDatabaseQueue";
 
 export async function start() {
     try {

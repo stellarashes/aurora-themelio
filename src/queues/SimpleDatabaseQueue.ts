@@ -3,21 +3,18 @@ import {Table, Column} from "../decorators/models/model-decorators";
 import {DataModel} from "../core/data/DataModel";
 import {DataTypes} from "sequelize";
 
-export class DatabaseQueue<T extends DataModel> implements Queue<T> {
-
+export class SimpleDatabaseQueue implements Queue<string> {
     private queueName: string;
     private retries: number;
-    private type: typeof DataModel;
 
-    public constructor(type: typeof DataModel, queueName: string, retries: number = 0) {
+    public constructor(queueName: string, retries: number) {
         this.queueName = queueName;
         this.retries = retries;
-        this.type = type;
     }
 
-    public async enqueue(object: T, enabledTime?: Date): Promise<T> {
+    public async enqueue(object: string, enabledTime?: Date): Promise<string> {
         return DBQueue.create({
-            targetId: object.getPKValue(),
+            targetId: object,
             startTime: enabledTime || new Date(),
             queueName: this.queueName,
             status: 'pending',
@@ -27,7 +24,7 @@ export class DatabaseQueue<T extends DataModel> implements Queue<T> {
         });
     }
 
-    public async dequeue(): Promise<T> {
+    public async dequeue(): Promise<string> {
         let now = new Date();
         return DBQueue.findOne({
             where: {
@@ -40,31 +37,24 @@ export class DatabaseQueue<T extends DataModel> implements Queue<T> {
             order: ['updatedAt']
         }).then(function (result) {
             let queueItem = <DBQueue>result;
-            let search = {};
-            search[this.type.getPKName()] = queueItem.targetId;
-            return this.type.findOne({
-                where: search
-            });
-        }).then(function (result) {
-            return <T>result;
+            return queueItem.targetId;
         });
     }
 
-    public async complete(object: T): Promise<any> {
-        let keyValue = object.getPKValue();
+    public async complete(object: string): Promise<any> {
         return DBQueue.update({
             status: 'completed'
         }, {
             where: {
-                targetId: keyValue
+                targetId: object
             }
         });
     }
 
-    public async error(object: T): Promise<any> {
+    public async error(object: string): Promise<any> {
         return DBQueue.findOne({
             where: {
-                targetId: object.getPKValue()
+                targetId: object
             }
         }).then(function (result) {
             let queueItem = <DBQueue>result;
