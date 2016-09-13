@@ -13,7 +13,7 @@ export * from "./queues/ObjectDatabaseQueue";
 
 export async function start() {
     try {
-        await DatabaseConnector.initialize();
+        DatabaseConnector.initialize();
         await ClassScanner.initialize();
         await DefaultServiceScanner.scan();
         await DatabaseConnector.sync();
