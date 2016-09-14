@@ -3,8 +3,8 @@ import {Container} from "typescript-ioc";
 import {GUID} from "./util/GUID";
 import {CacheService} from "../services/cache/CacheService";
 
-const metaCacheKey = 'controller:cache-guid';
-const metaCacheDuration = 'controller:cache-duration';
+const metaCacheKey = Symbol('controller:cache-guid');
+const metaCacheDuration = Symbol('controller:cache-duration');
 
 export class RouteHandler {
     private controller: Function;
