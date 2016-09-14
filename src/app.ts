@@ -18,7 +18,7 @@ export async function start() {
         await DefaultServiceScanner.scan();
         DatabaseConnector.linkAllRelations();
         await DatabaseConnector.sync();
-        var app = new ExpressApp();
+        let app = new ExpressApp();
         app.start();
     } catch (e) {
         console.error(e);

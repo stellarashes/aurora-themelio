@@ -25,7 +25,7 @@ export class RouteHandler {
             let instance = Container.get(this.controller.constructor);
             let handler = instance[this.handler];
 
-            var params = this.populateRequestParameters(req);
+            let params = this.populateRequestParameters(req);
 
             let shouldCache = Reflect.hasMetadata(metaCacheKey, this.controller, this.handler);
             let cacheKey = '';
