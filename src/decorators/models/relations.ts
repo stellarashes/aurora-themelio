@@ -3,6 +3,7 @@ import {HasOneOptions} from "~sequelize/lib/associations/has-one";
 import {HasManyOptions} from "~sequelize/lib/associations/has-many";
 import {DatabaseConnector} from "../../core/data/DatabaseConnector";
 import {ModelRelation} from "../../core/data/ModelRelation";
+import {BelongsToManyOptions} from "~sequelize/lib/associations/belongs-to-many";
 
 const relationMetaKey = Symbol('data:relations');
 
@@ -14,7 +15,7 @@ export function HasMany(targetModel: typeof DataModel, params?: HasManyOptions) 
     return hasAssociation('hasMany', targetModel, params);
 }
 
-function hasAssociation(type: string, targetModel: typeof DataModel, params: HasOneOptions | HasManyOptions) {
+function hasAssociation(type: string, targetModel: typeof DataModel, params: HasOneOptions | HasManyOptions | BelongsToManyOptions) {
     return function (target: DataModel, key: string) {
         params = setDefaultParams(params, key);
         let relation = {
@@ -64,3 +65,6 @@ export function Eager(target: DataModel, key: string) {
     updateRelation(target.constructor, relation);
 }
 
+export function BelongsToMany(targetModel: typeof DataModel, options: BelongsToManyOptions) {
+    return hasAssociation('belongsToMany', targetModel, options);
+}
