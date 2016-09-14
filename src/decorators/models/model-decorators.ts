@@ -3,18 +3,19 @@ import {DatabaseConnector} from "../../core/data/DatabaseConnector";
 import {DataModel} from "../../core/data/DataModel";
 import {SiteConfig} from "../../SiteConfig";
 
-const metaKey = Symbol('data:property-attributes');
+const columnMetaKey = Symbol('data:property-attributes');
+const typeMetaKey = 'design:type';
 
 export function Column(options?: string | DataTypes.DataType | ModelAttributeColumnOptions) {
     return function (target: any, key: string) {
         if (!options) {
-            let propertyType = Reflect.getMetadata('design:type', target, key);
+            let propertyType = Reflect.getMetadata(typeMetaKey, target, key);
             options = getDataTypeByPropertyType(target, key, propertyType);
         }
 
-        let columnOptions = Reflect.getMetadata(metaKey, target) || {};
+        let columnOptions = Reflect.getMetadata(columnMetaKey, target) || {};
         columnOptions[key] = options;
-        Reflect.defineMetadata(metaKey, columnOptions, target);
+        Reflect.defineMetadata(columnMetaKey, columnOptions, target);
     }
 }
 
@@ -31,19 +32,19 @@ function getDataTypeByPropertyType(target, key, propertyType) {
             return propertyTypeMapping[name];
         }
     }
-    throw new Error('Could not automatically determine the type of ' + target + '.' + key + ' (' + propertyType.name);
+    throw new Error('Could not automatically determine the type of ' + target + '.' + key + ' (' + propertyType.name + ')');
 }
 
 export function Table(options?: ModelOptions) {
     return function (target: typeof DataModel) {
-        let columnOptions: ModelAttributes = Reflect.getMetadata(metaKey, target.prototype) || {};
+        let columnOptions: ModelAttributes = Reflect.getMetadata(columnMetaKey, target.prototype) || {};
         columnOptions = addPKIfMissingAndEnabled(columnOptions);
         DatabaseConnector.defineType(target, options || {}, columnOptions);
     };
 }
 
 export function getModelAttributes(source) {
-    return Reflect.getMetadata(metaKey, source);
+    return Reflect.getMetadata(columnMetaKey, source);
 }
 
 function addPKIfMissingAndEnabled(columnOptions: ModelAttributes) {

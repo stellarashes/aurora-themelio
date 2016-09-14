@@ -16,6 +16,7 @@ export async function start() {
         DatabaseConnector.initialize();
         await ClassScanner.initialize();
         await DefaultServiceScanner.scan();
+        DatabaseConnector.linkAllRelations();
         await DatabaseConnector.sync();
         var app = new ExpressApp();
         app.start();

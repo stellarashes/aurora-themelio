@@ -1,10 +1,12 @@
 import {Sequelize, ModelAttributes} from "sequelize";
 import {SiteConfig} from "../../SiteConfig";
 import {DataModel} from "./DataModel";
+import {ModelRelation} from "./ModelRelation";
 
 
 export class DatabaseConnector {
     private static instance: Sequelize;
+    private static relations: ModelRelation[] = [];
 
     public static initialize() {
         if (!this.instance) {
@@ -24,6 +26,16 @@ export class DatabaseConnector {
         options['sequelize'] = this.instance;
         this.instance.define(model.name, columnOptions, options);
         model.init(columnOptions, options);
+    }
+
+    public static addRelation(relation: ModelRelation) {
+        this.relations.push(relation);
+    }
+
+    public static linkAllRelations() {
+        for (let relation of this.relations) {
+            relation.source[relation.type].call(relation.source, relation.target, relation.params);
+        }
     }
 
     public static async sync() {

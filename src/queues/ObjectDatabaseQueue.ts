@@ -1,6 +1,5 @@
 import {Queue} from "./Queue";
 import {DataModel} from "../core/data/DataModel";
-import {DataTypes} from "sequelize";
 import {SimpleDatabaseQueue} from "./SimpleDatabaseQueue";
 
 export class ObjectDatabaseQueue<T extends DataModel> implements Queue<T> {
