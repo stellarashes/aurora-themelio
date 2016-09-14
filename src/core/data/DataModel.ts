@@ -26,29 +26,32 @@ export class DataModel extends Model {
     }
 
     static create(values?: Object, options?: CreateOptions) {
-        options = this.addIncludesToOptions(options, x => values.hasOwnProperty(x.property));
+        options = this.addIncludesToTargetOptions(this, options, (x, v) => v.hasOwnProperty(x.property), values);
         return super.create(values, options);
     }
 
     static findAll(options?: FindOptions) {
-        options = this.addIncludesToOptions(options, x => x.eager);
+        options = this.addIncludesToTargetOptions(this, options, x => x.eager);
         return super.findAll(options);
     }
 
-    private static addIncludesToOptions(options: FindOptions | CreateOptions, addIncludeDelegate?: ShouldAddInclude) {
+    private static addIncludesToTargetOptions(target: any, options: any, addIncludeDelegate?: ShouldAddInclude, qualifyingValue?: any) {
         if (!addIncludeDelegate) {
             addIncludeDelegate = x => true;
         }
-        let relations = getModelRelations(this);
+        let relations = getModelRelations(target);
         let shouldCheckForInclude = (!options || !options.include) && relations.length > 0;
         if (shouldCheckForInclude) {
             let createIncludes = [];
             for (let relation of relations) {
-                if (addIncludeDelegate(relation)) {
-                    createIncludes.push({
+                if (this.relationQualifies(relation, qualifyingValue, addIncludeDelegate)) {
+                    let innerOptions = {
                         model: relation.target,
                         as: relation.property
-                    });
+                    };
+                    let innerValue = qualifyingValue ? qualifyingValue[relation.property] : null;
+                    innerOptions = this.addIncludesToTargetOptions(relation.target, innerOptions, addIncludeDelegate, innerValue);
+                    createIncludes.push(innerOptions);
                 }
             }
 
@@ -57,11 +60,22 @@ export class DataModel extends Model {
                 options.include = createIncludes;
             }
         }
-
         return options;
+    }
+
+    private static relationQualifies(relation: ModelRelation, qualifyingValue: any, delegate: ShouldAddInclude): boolean {
+        if (Array.isArray(qualifyingValue)) {
+            for (let item of qualifyingValue) {
+                if (delegate(relation, item)) {
+                    return true;    // returns true if any of the item in the array qualifies
+                }
+            }
+        } else {
+            return delegate(relation, qualifyingValue);
+        }
     }
 }
 
 interface ShouldAddInclude {
-    (relation: ModelRelation): boolean;
+    (relation: ModelRelation, qualifyValue?: any): boolean;
 }
