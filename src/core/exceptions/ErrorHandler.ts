@@ -6,6 +6,7 @@ export class ErrorHandler {
         if (e instanceof ArgumentError) {
             res.status(400).end({error: e.message});
         } else {
+            console.error(e);
             res.status(500).end();
         }
     }
