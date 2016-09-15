@@ -37,7 +37,8 @@ export class RouteHandler {
             app.post(fullPath, handler);
             app.get(byIdPath, handler);
             app.put(fullPath, handler);
-            app.put(byIdPath, handler);
+            if (byIdPath !== fullPath)
+                app.put(byIdPath, handler);
             app.delete(byIdPath, handler);
         }
 
