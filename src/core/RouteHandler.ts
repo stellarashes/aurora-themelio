@@ -24,6 +24,7 @@ export class RouteHandler {
     }
 
     public registerRoutes(app: Application) {
+        this.validate();
         let fullPath = this.getFullPath();
         if (this.data.CRUD) {
             let pk = this.data.CRUD.getPKNames();
@@ -47,6 +48,11 @@ export class RouteHandler {
                 listenMethod.call(app, fullPath, (req, res) => this.handleRequest(req, res));
             }
         }
+    }
+
+    private validate() {
+        let returnType = Reflect.getMetadata('design:returntype', this.data.controller, this.data.handler);
+        console.log(returnType);
     }
 
     private getFullPath(): string {
@@ -83,13 +89,8 @@ export class RouteHandler {
                 outputValue = await crudHandler.handleCRUD();
             }
 
-            var handlerPromise = handler.apply(instance, params);
-            if (handlerPromise) {
-                let controllerResponse = await handlerPromise;
-                outputValue = controllerResponse || outputValue || '';    // prioritize handler response; if handler has no response, use CRUD response if available
-            } else {
-                outputValue = '';
-            }
+            let controllerResponse = await handler.apply(instance, params);
+            outputValue = controllerResponse || outputValue || '';    // prioritize handler response; if handler has no response, use CRUD response if available
 
             res.json(outputValue);
 
