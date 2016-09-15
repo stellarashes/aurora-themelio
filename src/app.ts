@@ -7,3 +7,4 @@ export * from "./queues/SimpleDatabaseQueue";
 export * from "./queues/ObjectDatabaseQueue";
 export * from "./core/exceptions/ErrorHandler";
 export * from "./core/exceptions/ArgumentError";
+export * from "./Server";

@@ -23,6 +23,7 @@ let propertyTypeMapping = {
     "String": DataTypes.STRING,
     "Number": DataTypes.INTEGER,
     "Date": DataTypes.DATE,
+    "Boolean": DataTypes.BOOLEAN,
 };
 
 function getDataTypeByPropertyType(target, key, propertyType) {
