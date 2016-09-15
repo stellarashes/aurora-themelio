@@ -1,9 +1,9 @@
 import {Request, Response, Application} from "express";
 import {Container} from "typescript-ioc";
 import {CacheService} from "../services/cache/CacheService";
-import {RouteData} from "./RegistryEntry";
 import {CRUDHandlerFactory} from "./factory/CRUDHandlerFactory";
 import {ErrorHandler} from "./exceptions/ErrorHandler";
+import {RouteData} from "./RouteData";
 
 export class RouteHandler {
     private controller: Function;
