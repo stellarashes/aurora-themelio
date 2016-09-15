@@ -1,6 +1,7 @@
 {
   "name": "ts-chassis",
   "dependencies": {
+    "body-parser": "registry:npm/body-parser#1.15.2+20160815132839",
     "mime": "registry:npm/mime#1.3.0+20160723033700",
     "redis": "registry:npm/redis#2.6.0+20160901110043",
     "sequelize": "registry:npm/sequelize#4.0.0-1+20160828072620"

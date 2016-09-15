@@ -13,7 +13,7 @@ export function Column(options?: string | DataTypes.DataType | ModelAttributeCol
             options = getDataTypeByPropertyType(target, key, propertyType);
         }
 
-        let columnOptions = Reflect.getMetadata(columnMetaKey, target) || {};
+        let columnOptions = getModelAttributes(target) || {};
         columnOptions[key] = options;
         Reflect.defineMetadata(columnMetaKey, columnOptions, target);
     }
@@ -37,8 +37,9 @@ function getDataTypeByPropertyType(target, key, propertyType) {
 
 export function Table(options?: ModelOptions) {
     return function (target: typeof DataModel) {
-        let columnOptions: ModelAttributes = Reflect.getMetadata(columnMetaKey, target.prototype) || {};
+        let columnOptions: ModelAttributes = getModelAttributes(target.prototype) || {};
         columnOptions = addPKIfMissingAndEnabled(columnOptions);
+        Reflect.defineMetadata(columnMetaKey, columnOptions, target.prototype);
         DatabaseConnector.defineType(target, options || {}, columnOptions);
     };
 }

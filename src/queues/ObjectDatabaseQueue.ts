@@ -12,7 +12,7 @@ export class ObjectDatabaseQueue<T extends DataModel> implements Queue<T> {
     }
 
     public async enqueue(object: T, enabledTime?: Date): Promise<T> {
-        return this.keyQueue.enqueue(object.getPKValue(), enabledTime)
+        return this.keyQueue.enqueue(JSON.stringify(object.getPKValues()), enabledTime)
             .then(function() {
                 return object;
             });
@@ -21,19 +21,18 @@ export class ObjectDatabaseQueue<T extends DataModel> implements Queue<T> {
     public async dequeue(): Promise<T> {
         return this.keyQueue.dequeue()
             .then(function (targetId) {
-                let search = {};
-                search[this.type.getPKName()] = targetId;
+                let search = this.type.getPKValuesFromObject(JSON.stringify(targetId));
 
                 return this.type.findOne({where: search});
             });
     }
 
     public async complete(object: T): Promise<any> {
-        return this.keyQueue.complete(object.getPKValue());
+        return this.keyQueue.complete(JSON.stringify(object.getPKValues()));
     }
 
     public async error(object: T): Promise<any> {
-        return this.keyQueue.error(object.getPKValue());
+        return this.keyQueue.error(JSON.stringify(object.getPKValues()));
     }
 
 }

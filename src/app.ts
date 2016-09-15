@@ -10,6 +10,8 @@ export * from "./decorators";
 export * from "./queues/Queue";
 export * from "./queues/SimpleDatabaseQueue";
 export * from "./queues/ObjectDatabaseQueue";
+export * from "./core/exceptions/ErrorHandler";
+export * from "./core/exceptions/ArgumentError";
 
 export async function start() {
     try {

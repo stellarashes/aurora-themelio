@@ -1,37 +1,72 @@
-import {Request, Response} from "express";
+import {Request, Response, Application} from "express";
 import {Container} from "typescript-ioc";
-import {GUID} from "./util/GUID";
 import {CacheService} from "../services/cache/CacheService";
-
-const metaCacheKey = Symbol('controller:cache-guid');
-const metaCacheDuration = Symbol('controller:cache-duration');
+import {RouteData} from "./RegistryEntry";
+import {CRUDHandlerFactory} from "./factory/CRUDHandlerFactory";
+import {ErrorHandler} from "./exceptions/ErrorHandler";
 
 export class RouteHandler {
     private controller: Function;
     private handler: string;
     private parameters: ParamInfo[] = [];
     private cacheService: CacheService;
+    private data: RouteData;
+    private crudHandlerFactory: CRUDHandlerFactory;
 
-    constructor(controller: Function, handler: string) {
-        this.controller = controller;
-        this.handler = handler;
+    constructor(routeData: RouteData) {
+        this.controller = routeData.controller;
+        this.handler = routeData.handler;
+        this.data = routeData;
         this.cacheService = Container.get(CacheService);
+        this.crudHandlerFactory = Container.get(CRUDHandlerFactory);
 
         this.populateParameters();
     }
 
-    public async handleRequest(req: Request, res: Response) {
+    public registerRoutes(app: Application) {
+        let fullPath = this.getFullPath();
+        if (this.data.CRUD) {
+            let pk = this.data.CRUD.getPKNames();
+            let byIdPath;
+            if (pk.length === 1) {
+                byIdPath = fullPath + '/:' + pk[0];
+            } else {
+                byIdPath = fullPath;
+            }
+            let handler = (req, res) => this.handleRequest(req, res);
+            app.post(fullPath, handler);
+            app.get(byIdPath, handler);
+            app.put(fullPath, handler);
+            app.put(byIdPath, handler);
+            app.delete(byIdPath, handler);
+        }
+
+        if (this.data.methods) {
+            for (let method of this.data.methods) {
+                let listenMethod = app[method.toLowerCase()];
+                listenMethod.call(app, fullPath, (req, res) => this.handleRequest(req, res));
+            }
+        }
+    }
+
+    private getFullPath(): string {
+        let basePath = removeTrailingSlashes(this.data.basePath || '');
+        let handlerPath = removeTrailingSlashes(addLeadingSlash(this.data.handlerPath || '')); // add leading slash in handlerPath if needed
+        return basePath + handlerPath;
+    }
+
+    private async handleRequest(req: Request, res: Response) {
         try {
             let instance = Container.get(this.controller.constructor);
             let handler = instance[this.handler];
 
             let params = this.populateRequestParameters(req);
 
-            let shouldCache = Reflect.hasMetadata(metaCacheKey, this.controller, this.handler);
+            let shouldCache = this.data.cacheDuration && (!this.data.cacheCondition || this.data.cacheCondition(req));
             let cacheKey = '';
 
             if (shouldCache) {
-                cacheKey = Reflect.getMetadata(metaCacheKey, this.controller, this.handler) + JSON.stringify(params);
+                cacheKey = this.data.cacheKey + JSON.stringify(params);
                 let isCached = await this.cacheService.exists(cacheKey);
                 if (isCached) {
                     let cachedData = await this.cacheService.get(cacheKey);
@@ -41,19 +76,33 @@ export class RouteHandler {
                 }
             }
 
-            let outputValue = await handler.apply(instance, params);
+            let outputValue;
+
+            if (this.data.CRUD) {
+                let crudHandler = this.crudHandlerFactory.getHandler(req, this.data.CRUD);
+                outputValue = await crudHandler.handleCRUD();
+            }
+
+            var handlerPromise = handler.apply(instance, params);
+            if (handlerPromise) {
+                let controllerResponse = await handlerPromise;
+                outputValue = controllerResponse || outputValue || '';    // prioritize handler response; if handler has no response, use CRUD response if available
+            } else {
+                outputValue = '';
+            }
+
             res.json(outputValue);
 
             if (shouldCache) {
                 let cacheData = JSON.stringify(outputValue);
                 await this.cacheService.set(cacheKey, cacheData);
 
-                let cacheDuration = Reflect.getMetadata(metaCacheDuration, this.controller, this.handler);
+                let cacheDuration = this.data.cacheDuration;
                 await this.cacheService.expire(cacheKey, cacheDuration);
             }
         } catch (e) {
-            console.error(e);
-            res.status(500).end();
+            let handler = Container.get(ErrorHandler);
+            handler.handleError(e, req, res);
         }
     }
 
@@ -91,13 +140,14 @@ export class RouteHandler {
 
         return undefined;
     }
+}
 
-    public static setCacheDuration(controller: any, handler: string, seconds: number) {
-        Reflect.defineMetadata(metaCacheKey, 'controller' + GUID.getGUID(), controller, handler);
-        Reflect.defineMetadata(metaCacheDuration, seconds, controller, handler);
-    }
+function removeTrailingSlashes(input: string) {
+    return input.replace(/\/+$/, '');
+}
 
-
+function addLeadingSlash(input: string) {
+    return input.replace(/^[^\/]/, '/');
 }
 
 interface ParamInfo {
