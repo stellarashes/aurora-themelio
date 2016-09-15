@@ -1,9 +1,9 @@
 import {Request, Response, Application} from "express";
 import {Container} from "typescript-ioc";
 import {CacheService} from "../services/cache/CacheService";
-import {RouteData} from "./RegistryEntry";
 import {CRUDHandlerFactory} from "./factory/CRUDHandlerFactory";
 import {ErrorHandler} from "./exceptions/ErrorHandler";
+import {RouteData} from "./RouteData";
 
 export class RouteHandler {
     private controller: Function;
@@ -38,7 +38,8 @@ export class RouteHandler {
             app.post(fullPath, handler);
             app.get(byIdPath, handler);
             app.put(fullPath, handler);
-            app.put(byIdPath, handler);
+            if (byIdPath !== fullPath)
+                app.put(byIdPath, handler);
             app.delete(byIdPath, handler);
         }
 
@@ -80,7 +81,7 @@ export class RouteHandler {
                     let cachedData = await this.cacheService.get(cacheKey);
                     res.header('X-Cache', 'HIT from application');
                     res.end(cachedData);
-                    return;
+                    return Promise.resolve(cachedData);
                 }
             }
 

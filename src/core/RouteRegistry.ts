@@ -1,10 +1,10 @@
 import {Application} from "express";
-import {RouteData} from "./RegistryEntry";
 import {DataModel} from "./data/DataModel";
 import {GUID} from "./util/GUID";
 import {CacheConditionDelegate} from "../decorators/Cache";
 import {RouteHandlerFactory} from "./factory/RouteHandlerFactory";
 import {Container} from "typescript-ioc";
+import {RouteData} from "./RouteData";
 
 const routeMetaKey = Symbol('controller:route');
 const basePathMetaKey = 'controller:basePath';
