@@ -1,4 +1,3 @@
-
 import {getModelAttributes} from "../../decorators/models/model-decorators";
 import {CreateOptions, Model, Promise, FindOptions} from "sequelize";
 import {getModelRelations} from "../../decorators/models/relations";
@@ -6,23 +5,31 @@ import {ModelRelation} from "./ModelRelation";
 
 export class DataModel extends Model {
 
-    public static getPKName(): string {
-        let attributes = getModelAttributes(this);
-        for (let [key, value] of attributes) {
-            if (value && value.primaryKey) {
-                return key;
+    public static getPKNames(): string[] {
+        let pks = [];
+        let attributes = getModelAttributes(this.prototype);
+        for (let key in attributes) {
+            if (attributes.hasOwnProperty(key)) {
+                let value = attributes[key];
+                if (value && value.primaryKey) {
+                    pks.push(key);
+                }
             }
         }
 
-        return null;
+        return pks;
     }
 
-    public getPKValue(): any {
-        let name = DataModel.getPKName();
-        if (name) {
-            return this[name];
-        }
-        return null;
+    public static getPKValuesFromObject(input: any) {
+        let names = DataModel.getPKNames();
+        return names.reduce((prev, next) => {
+            prev[next] = input[next];
+            return prev;
+        }, {});
+    }
+
+    public getPKValues() {
+        return DataModel.getPKValuesFromObject(this);
     }
 
     static create(values?: Object, options?: CreateOptions) {

@@ -1,7 +1,8 @@
-import * as express from 'express';
+import * as express from "express";
 import {Application} from "express";
 import {RouteRegistry} from "./RouteRegistry";
 import {SiteConfig} from "../SiteConfig";
+import {json} from "body-parser";
 
 export class ExpressApp {
     private app: Application;
@@ -9,6 +10,7 @@ export class ExpressApp {
     constructor() {
         this.app = express();
         this.app.disable('x-powered-by');
+        this.app.use(json());
     }
 
     public start() {
