@@ -72,7 +72,7 @@ export class RouteHandler {
                     let cachedData = await this.cacheService.get(cacheKey);
                     res.header('X-Cache', 'HIT from application');
                     res.end(cachedData);
-                    return;
+                    return Promise.resolve(cachedData);
                 }
             }
 
