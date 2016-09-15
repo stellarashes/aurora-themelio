@@ -52,7 +52,9 @@ export class RouteHandler {
 
     private validate() {
         let returnType = Reflect.getMetadata('design:returntype', this.data.controller, this.data.handler);
-        console.log(returnType);
+        if (returnType !== Promise) {
+            console.warn("Handler on " + this.data.controller.constructor.name + "." + this.data.handler + " is not marked async");
+        }
     }
 
     private getFullPath(): string {
