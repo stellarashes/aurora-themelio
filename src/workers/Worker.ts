@@ -1,8 +1,10 @@
+import {Queue} from "../queues/Queue";
 export abstract class Worker<T> {
     private sleep: number;
+    private queue: Queue<T>;
 
     /**
-     * Number in milliseconds to delay between consecutive invocations of get when there are no items that are returned
+     * Number in milliseconds to delay between consecutive invocations of get when there are no items that are returned, or delay between invocation with no queue set
      * @param sleep
      */
     public constructor(sleep: number) {
@@ -16,25 +18,38 @@ export abstract class Worker<T> {
         return 10;
     }
 
-    public getItems(): T[] {
-        return null;
+    public setQueue(queue: Queue<T>) {
+        this.queue = queue;
     }
 
     public abstract async work(item: T): Promise<any>;
 
     public async run(): Promise<any> {
-        while(true) {
-            await this.runStep();
+        if (!this.queue) {
+            console.warn('Worker ' + this.constructor.name + ' has no queue to read from');
+        }
+        for (var i = 0; i < this.getConcurrency(); i++) {
+            this.runStep();
         }
     }
 
-    private async runStep(): Promise<any> {
-        let items = this.getItems();
-        if (!items || !Array.isArray(items) || items.length === 0) {
-            return Worker.delay(this.sleep);
+    private async runStep() {
+        while(true) {
+            await this.runTask();
+        }
+    }
+
+    private async runTask(): Promise<any> {
+        if (this.queue) {
+            let item = await this.queue.dequeue();
+            if (item) {
+                return this.work(item);
+            }
+        } else {
+            return this.work(null);
         }
 
-        return Promise.all(items.map(x => this.work(x)));
+        return Worker.delay(this.sleep);
     }
 
     private static async delay(milliseconds: number) {
