@@ -1,3 +1,2 @@
-import {start} from "./app";
-
-start();
+import {Server} from "./Server";
+Server.start();
