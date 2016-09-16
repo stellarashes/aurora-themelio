@@ -6,15 +6,17 @@ export abstract class TaskWorker<T> {
     /**
      * Number in milliseconds to delay between consecutive invocations of get when there are no items that are returned, or delay between invocation with no queue set
      * @param sleep
+     * @param queue
      */
-    public constructor(sleep: number) {
+    public constructor(sleep: number, queue?: Queue<T>) {
         this.sleep = sleep;
+        this.queue = queue;
     }
 
     /**
      * Get the number of concurrent things the worker should work on
      */
-    public getConcurrency(): number {
+    public static getConcurrency(): number {
         return 10;
     }
 
@@ -24,16 +26,10 @@ export abstract class TaskWorker<T> {
 
     public abstract async work(item: T): Promise<any>;
 
-    public async run(): Promise<any> {
+    private async run() {
         if (!this.queue) {
             console.warn('Worker ' + this.constructor.name + ' has no queue to read from');
         }
-        for (var i = 0; i < this.getConcurrency(); i++) {
-            this.runStep();
-        }
-    }
-
-    private async runStep() {
         while(true) {
             await this.runTask();
         }
