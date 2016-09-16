@@ -26,7 +26,7 @@ export abstract class TaskWorker<T> {
 
     public abstract async work(item: T): Promise<any>;
 
-    private async run() {
+    public async run() {
         if (!this.queue) {
             console.warn('Worker ' + this.constructor.name + ' has no queue to read from');
         }
