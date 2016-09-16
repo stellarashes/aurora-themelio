@@ -1,5 +1,5 @@
 import {Queue} from "../queues/Queue";
-export abstract class Worker<T> {
+export abstract class TaskWorker<T> {
     private sleep: number;
     private queue: Queue<T>;
 
@@ -49,7 +49,7 @@ export abstract class Worker<T> {
             return this.work(null);
         }
 
-        return Worker.delay(this.sleep);
+        return TaskWorker.delay(this.sleep);
     }
 
     private static async delay(milliseconds: number) {
