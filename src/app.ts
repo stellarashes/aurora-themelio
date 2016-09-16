@@ -6,4 +6,4 @@ export * from "./queues";
 export * from "./core/exceptions/ErrorHandler";
 export * from "./core/exceptions/ArgumentError";
 export * from "./Server";
-export * from "./workers/Worker";
+export * from "./workers/TaskWorker";
