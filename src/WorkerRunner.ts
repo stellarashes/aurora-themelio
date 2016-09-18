@@ -1,14 +1,13 @@
 import {TaskWorker} from "./workers/TaskWorker";
 import {Initializer} from "./Initializer";
 export class WorkerRunner {
-    public static async start(workerTypes: (typeof TaskWorker)[]) {
+    public static async start<T, U extends TaskWorker<T>>(workers: U[]) {
         await Initializer.run();
 
-        for (let workerType of workerTypes) {
-            let concurrency = workerType.getConcurrency();
+        for (let worker of workers) {
+            let concurrency = worker.getConcurrency();
             for (let i = 0; i < concurrency; i++) {
-                let instance = Reflect.construct(workerType, []);
-                instance.run();
+                worker.run();
             }
         }
     }

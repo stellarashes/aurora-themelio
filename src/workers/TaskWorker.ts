@@ -16,7 +16,7 @@ export abstract class TaskWorker<T> {
     /**
      * Get the number of concurrent things the worker should work on
      */
-    public static getConcurrency(): number {
+    public getConcurrency(): number {
         return 10;
     }
 
@@ -39,10 +39,16 @@ export abstract class TaskWorker<T> {
         if (this.queue) {
             let item = await this.queue.dequeue();
             if (item) {
-                return this.work(item);
+                try {
+                    let result = await this.work(item);
+                    return Promise.resolve(result);
+                } catch (e) {
+                    this.queue.enqueue(item);
+                    return Promise.resolve(e);
+                }
             }
         } else {
-            return this.work(null);
+            await this.work(null);
         }
 
         return TaskWorker.delay(this.sleep);
