@@ -1,20 +1,10 @@
-import * as fs from "fs";
 import {DataTypes, ModelAttributeColumnOptions} from "sequelize";
-
-if (!process.env.NODE_ENV) {
-    let filePath = process.env.ENV_PATH || '../.env';
-    if (fs.existsSync(filePath)) {
-        require('dotenv').config({
-            path: filePath
-        });
-    }
-}
 
 export class SiteConfig {
     public static CachePort: number = process.env.CACHE_PORT || 6379;
     public static CacheHost: string = process.env.CACHE_HOST || 'localhost';
     public static SitePort: number = process.env.PORT || 3000;
-    public static ScanPaths: string = process.env.SCAN_PATHS || './controllers,./services,./models';
+    public static ScanPaths: string = process.env.SCAN_PATHS || 'controllers/**/*.js,services/**/*.js,models/**/*.js';
 
     public static DatabaseUser: string = process.env.DB_USER || 'demo';
     public static DatabasePass: string = process.env.DB_PASS || '';

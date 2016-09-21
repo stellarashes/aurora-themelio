@@ -1,6 +1,6 @@
-import * as rr from "recursive-readdir";
 import {SiteConfig} from "../SiteConfig";
 import * as fs from "fs";
+import * as glob from "glob";
 
 export class ClassScanner {
     public static async initialize(): Promise<any> {
@@ -23,7 +23,7 @@ export class ClassScanner {
                     }
                 }
                 else if (stats.isDirectory()) {
-                    rr(path, ['!*.js'], (err, files) => {
+                    glob(path, null, (err, files) => {
                         if (err) {
                             reject(err);
                         }
