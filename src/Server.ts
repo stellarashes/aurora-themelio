@@ -4,7 +4,7 @@ import {Initializer} from "./Initializer";
 export class Server {
     public static async start() {
         try {
-            Initializer.run();
+            await Initializer.run();
             let app = new ExpressApp();
             app.start();
         } catch (e) {

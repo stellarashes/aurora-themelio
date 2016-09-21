@@ -1,6 +1,6 @@
 import {SiteConfig} from "../SiteConfig";
-import * as fs from "fs";
 import * as glob from "glob";
+import * as path from "path";
 
 export class ClassScanner {
     public static async initialize(): Promise<any> {
@@ -11,30 +11,21 @@ export class ClassScanner {
         );
     }
 
-    private static async scanForPath(path: string): Promise<void> {
+    private static async scanForPath(targetPath: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             let cwd = process.cwd();
-            fs.stat(path, (err, stats) => {
+
+            glob(targetPath, null, (err, files) => {
                 if (err) {
-                    if (err.code === 'ENOENT') {
-                        resolve();
-                    } else {
-                        reject(err);
-                    }
+                    reject(err);
                 }
-                else if (stats.isDirectory()) {
-                    glob(path, null, (err, files) => {
-                        if (err) {
-                            reject(err);
-                        }
 
-                        for (let file of files) {
-                            require(cwd + '/' + file);
-                        }
-
-                        resolve();
-                    });
+                for (let file of files) {
+                    var fullPath = path.resolve(cwd, file);
+                    require(fullPath);
                 }
+
+                resolve();
             });
         });
     }
