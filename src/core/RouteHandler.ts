@@ -4,6 +4,8 @@ import {CacheService} from "../services/cache/CacheService";
 import {CRUDHandlerFactory} from "./factory/CRUDHandlerFactory";
 import {ErrorHandler} from "./exceptions/ErrorHandler";
 import {RouteData} from "./RouteData";
+import {ActionExecutingContext} from "../filters/context/ActionExecutingContext";
+import {HttpContext} from "./HttpContext";
 
 export class RouteHandler {
     private controller: Function;
@@ -108,6 +110,16 @@ export class RouteHandler {
             let handler = Container.get(ErrorHandler);
             handler.handleError(e, req, res);
         }
+    }
+
+    private getActionContext(req: Request, res: Response): ActionExecutingContext {
+        let context: ActionExecutingContext = Container.get(ActionExecutingContext);
+        context.httpContext = Container.get(HttpContext);
+        context.httpContext.request = req;
+        context.httpContext.response = res;
+        context.routeData = this.data;
+
+        return context;
     }
 
     private populateParameters(): void {

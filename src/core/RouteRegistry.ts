@@ -18,7 +18,7 @@ export class RouteRegistry {
     }
 
     public static setHandlerPath(controller: any, handler: string, path: string) {
-        this.updateRouteData(controller, handler, x => {x.handlerPath = path; return x;});
+        this.updateRouteData(controller, handler, x => x.handlerPath = path);
     }
 
     public static setCRUD(controller: any, handler: string, model: typeof DataModel) {
@@ -39,7 +39,7 @@ export class RouteRegistry {
         }));
     }
 
-    private static updateRouteData(controller: any, handler: string, delegate: RouteUpdateDelegate) {
+    public static updateRouteData(controller: any, handler: string, delegate: RouteUpdateDelegate) {
         let routeData = this.getRouteData(controller, handler);
         routeData = delegate(routeData);
         Reflect.defineMetadata(routeMetaKey, routeData, controller, handler);
@@ -94,6 +94,6 @@ interface RegistryEntry {
 }
 
 
-interface RouteUpdateDelegate {
-    (previous: RouteData): RouteData;
+export interface RouteUpdateDelegate {
+    (previous: RouteData): void;
 }

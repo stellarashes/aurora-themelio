@@ -1,5 +1,6 @@
 import {DataModel} from "./data/DataModel";
 import {CacheConditionDelegate} from "../decorators/Cache";
+import {ActionFilter} from "../filters/ActionFilter";
 export interface RouteData {
     controller: any;
     handler: string;
@@ -10,4 +11,5 @@ export interface RouteData {
     cacheDuration?: number;
     cacheKey?: string;
     cacheCondition?: CacheConditionDelegate;
+    filters?: ActionFilter[];
 }

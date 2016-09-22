@@ -1,4 +1,5 @@
 import {RouteRegistry} from "../core/RouteRegistry";
+import {unravelWrappedConstructor} from "./util";
 export function Path(path: string) {
     path = padPath(path);
     return function(target: any, key?: string, value?: any): any {
@@ -11,14 +12,6 @@ export function Path(path: string) {
 }
 
 export let Route = Path;
-
-function unravelWrappedConstructor(target: any) {
-    if (target.hasOwnProperty('__parent')) {
-        return unravelWrappedConstructor(target['__parent']);
-    }
-
-    return target.prototype;
-}
 
 function padPath(path:string): string {
     if (path.charAt(0) !== '/') {

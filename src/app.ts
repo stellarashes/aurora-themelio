@@ -1,4 +1,4 @@
-export * from "./core/data/DataModel";
+export * from "./core";
 export * from "./services/cache/CacheService";
 export * from "./SiteConfig";
 export * from "./decorators";
