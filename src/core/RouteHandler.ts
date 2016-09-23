@@ -4,180 +4,207 @@ import {CacheService} from "../services/cache/CacheService";
 import {CRUDHandlerFactory} from "./factory/CRUDHandlerFactory";
 import {ErrorHandler} from "./exceptions/ErrorHandler";
 import {RouteData} from "./RouteData";
-import {ActionExecutingContext} from "../filters/context/ActionExecutingContext";
-import {HttpContext} from "./HttpContext";
+import {ContextFactory} from "../filters/context/ContextFactory";
+import {ActionFilter} from "../filters/ActionFilter";
+import {ControllerContext} from "../filters/context/ControllerContext";
+import {ActionResultRenderer} from "./render/ActionResultRenderer";
 
 export class RouteHandler {
-    private controller: Function;
-    private handler: string;
-    private parameters: ParamInfo[] = [];
-    private cacheService: CacheService;
-    private data: RouteData;
-    private crudHandlerFactory: CRUDHandlerFactory;
+	private controller: Function;
+	private handler: string;
+	private parameters: ParamInfo[] = [];
+	private cacheService: CacheService;
+	private data: RouteData;
+	private crudHandlerFactory: CRUDHandlerFactory;
+	private contextFactory: ContextFactory;
 
-    constructor(routeData: RouteData) {
-        this.controller = routeData.controller;
-        this.handler = routeData.handler;
-        this.data = routeData;
-        this.cacheService = Container.get(CacheService);
-        this.crudHandlerFactory = Container.get(CRUDHandlerFactory);
+	constructor(routeData: RouteData) {
+		this.controller = routeData.controller;
+		this.handler = routeData.handler;
+		this.data = routeData;
+		this.cacheService = Container.get(CacheService);
+		this.crudHandlerFactory = Container.get(CRUDHandlerFactory);
+		this.contextFactory = Container.get(ContextFactory);
 
-        this.populateParameters();
-    }
+		this.populateParameters();
+	}
 
-    public registerRoutes(app: Application) {
-        this.validate();
-        let fullPath = this.getFullPath();
-        if (this.data.CRUD) {
-            let pk = this.data.CRUD.getPKNames();
-            let byIdPath;
-            if (pk.length === 1) {
-                byIdPath = fullPath + '/:' + pk[0];
-            } else {
-                byIdPath = fullPath;
-            }
-            let handler = (req, res) => this.handleRequest(req, res);
-            app.post(fullPath, handler);
-            app.get(byIdPath, handler);
-            app.put(fullPath, handler);
-            if (byIdPath !== fullPath)
-                app.put(byIdPath, handler);
-            app.delete(byIdPath, handler);
-        }
+	public registerRoutes(app: Application) {
+		this.validate();
+		let fullPath = this.getFullPath();
+		if (this.data.CRUD) {
+			let pk = this.data.CRUD.getPKNames();
+			let byIdPath;
+			if (pk.length === 1) {
+				byIdPath = fullPath + '/:' + pk[0];
+			} else {
+				byIdPath = fullPath;
+			}
+			let handler = (req, res) => this.handleRequest(req, res);
+			app.post(fullPath, handler);
+			app.get(byIdPath, handler);
+			app.put(fullPath, handler);
+			if (byIdPath !== fullPath)
+				app.put(byIdPath, handler);
+			app.delete(byIdPath, handler);
+		}
 
-        if (this.data.methods) {
-            for (let method of this.data.methods) {
-                let listenMethod = app[method.toLowerCase()];
-                listenMethod.call(app, fullPath, (req, res) => this.handleRequest(req, res));
-            }
-        }
-    }
+		if (this.data.methods) {
+			for (let method of this.data.methods) {
+				let listenMethod = app[method.toLowerCase()];
+				listenMethod.call(app, fullPath, (req, res) => this.handleRequest(req, res));
+			}
+		}
+	}
 
-    private validate() {
-        let returnType = Reflect.getMetadata('design:returntype', this.data.controller, this.data.handler);
-        if (returnType !== Promise) {
-            console.warn("Handler on " + this.data.controller.constructor.name + "." + this.data.handler + " is not marked async");
-        }
-    }
+	private validate() {
+		let returnType = Reflect.getMetadata('design:returntype', this.data.controller, this.data.handler);
+		if (returnType !== Promise) {
+			console.warn("Handler on " + this.data.controller.constructor.name + "." + this.data.handler + " is not marked async");
+		}
+	}
 
-    private getFullPath(): string {
-        let basePath = removeTrailingSlashes(this.data.basePath || '');
-        let handlerPath = removeTrailingSlashes(addLeadingSlash(this.data.handlerPath || '')); // add leading slash in handlerPath if needed
-        return basePath + handlerPath;
-    }
+	private getFullPath(): string {
+		let basePath = removeTrailingSlashes(this.data.basePath || '');
+		let handlerPath = removeTrailingSlashes(addLeadingSlash(this.data.handlerPath || '')); // add leading slash in handlerPath if needed
+		return basePath + handlerPath;
+	}
 
-    private async handleRequest(req: Request, res: Response) {
-        try {
-            let instance = Container.get(this.controller.constructor);
-            let handler = instance[this.handler];
+	private async handleRequest(req: Request, res: Response) {
+		try {
+			let instance = Container.get(this.controller.constructor);
+			let handler = instance[this.handler];
 
-            let params = this.populateRequestParameters(req);
+			let params = this.populateRequestParameters(req);
 
-            let shouldCache = this.data.cacheDuration && (!this.data.cacheCondition || this.data.cacheCondition(req));
-            let cacheKey = '';
+			let shouldCache = this.data.cacheDuration && (!this.data.cacheCondition || this.data.cacheCondition(req)), isCached = false;
+			let result;
+			let cacheKey = '';
 
-            if (shouldCache) {
-                cacheKey = this.data.cacheKey + JSON.stringify(params);
-                let isCached = await this.cacheService.exists(cacheKey);
-                if (isCached) {
-                    let cachedData = await this.cacheService.get(cacheKey);
-                    res.header('X-Cache', 'HIT from application');
-                    res.end(cachedData);
-                    return Promise.resolve(cachedData);
-                }
-            }
+			let actionExecutingContext;
 
-            let outputValue;
+			if (shouldCache) {
+				cacheKey = this.data.cacheKey + JSON.stringify(params);
+				isCached = await this.cacheService.exists(cacheKey);
+				if (isCached) {
+					let cachedData = await this.cacheService.get(cacheKey);
+					result = JSON.parse(cachedData);
+					res.header('X-Cache', 'HIT from application');
+				}
+			}
 
-            if (this.data.CRUD) {
-                let crudHandler = this.crudHandlerFactory.getHandler(req, this.data.CRUD);
-                outputValue = await crudHandler.handleCRUD();
-            }
+			actionExecutingContext = this.contextFactory.createActionExecutingContext(req, res, this.data, params, isCached);
+			await this.invokeFilters(x => x.onActionExecuting, actionExecutingContext);
 
-            let controllerResponse = await handler.apply(instance, params);
-            outputValue = controllerResponse || outputValue || '';    // prioritize handler response; if handler has no response, use CRUD response if available
+			try {
+				if (!isCached) {
+					if (this.data.CRUD) {
+						let crudHandler = this.crudHandlerFactory.getHandler(req, this.data.CRUD);
+						result = await crudHandler.handleCRUD();
+					}
 
-            res.json(outputValue);
+					let controllerResponse = await handler.apply(instance, params);
+					result = controllerResponse || result || '';    // prioritize handler response; if handler has no response, use CRUD response if available
+				}
+			} catch (e) {
+				actionExecutingContext.error = e;
+			}
 
-            if (shouldCache) {
-                let cacheData = JSON.stringify(outputValue);
-                await this.cacheService.set(cacheKey, cacheData);
+			let actionExecutedContext = this.contextFactory.createActionExecutedContext(actionExecutingContext, result);
+			await this.invokeFilters(x => x.onActionExecuted, actionExecutedContext);
 
-                let cacheDuration = this.data.cacheDuration;
-                await this.cacheService.expire(cacheKey, cacheDuration);
-            }
-        } catch (e) {
-            let handler = Container.get(ErrorHandler);
-            handler.handleError(e, req, res);
-        }
-    }
+			let resultExecutingContext = this.contextFactory.createResultExecutingContext(actionExecutedContext);
+			await this.invokeFilters(x => x.onResultExecuting, resultExecutingContext);
 
-    private getActionContext(req: Request, res: Response): ActionExecutingContext {
-        let context: ActionExecutingContext = Container.get(ActionExecutingContext);
-        context.httpContext = Container.get(HttpContext);
-        context.httpContext.request = req;
-        context.httpContext.response = res;
-        context.routeData = this.data;
+			let renderer = Container.get(ActionResultRenderer);
+			let outputResult = await renderer.doRender(resultExecutingContext);
 
-        return context;
-    }
+			if (shouldCache && !isCached) {
+				let cacheData = JSON.stringify(result);
+				await this.cacheService.set(cacheKey, cacheData);
 
-    private populateParameters(): void {
-        let metadata = Reflect.getMetadata('design:paramtypes', this.controller, this.handler);
-        let names = getParameterNames(this.controller[this.handler]);
+				let cacheDuration = this.data.cacheDuration;
+				await this.cacheService.expire(cacheKey, cacheDuration);
+			}
 
-        for (let i = 0; i < names.length; i++) {
-            let info = {
-                name: names[i],
-                type: metadata[i],
-            };
-            this.parameters.push(info);
-        }
-    }
+			let resultExecutedContext = this.contextFactory.createResultExecutedContext(resultExecutingContext, outputResult, shouldCache ? cacheKey : null);
+			await this.invokeFilters(x => x.onResultExecuted, resultExecutedContext);
+		} catch (e) {
+			let handler = Container.get(ErrorHandler);
+			handler.handleError(e, req, res);
+		}
+	}
 
-    private populateRequestParameters(req: Request): any[] {
-        let params = [];
 
-        for (let param of this.parameters) {
-            params.push(RouteHandler.populateRequestParameter(req, param));
-        }
+	private async invokeFilters(selectTargetFunction: FilterFunction, context: ControllerContext) {
+		if (this.data.filters) {
+			for (let filter of this.data.filters) {
+				let method = selectTargetFunction(filter);
+				await method.call(filter, context);
+			}
+		}
+	}
 
-        return params;
-    }
+	private populateParameters(): void {
+		let metadata = Reflect.getMetadata('design:paramtypes', this.controller, this.handler);
+		let names = getParameterNames(this.controller[this.handler]);
 
-    private static populateRequestParameter(req: Request, param: ParamInfo) {
-        if (req.params.hasOwnProperty(param.name)) {
-            return req.params[param.name];
-        }
+		for (let i = 0; i < names.length; i++) {
+			let info = {
+				name: names[i],
+				type: metadata[i],
+			};
+			this.parameters.push(info);
+		}
+	}
 
-        if (req.query.hasOwnProperty(param.name)) {
-            return req.query[param.name];
-        }
+	private populateRequestParameters(req: Request): any[] {
+		let params = [];
 
-        return undefined;
-    }
+		for (let param of this.parameters) {
+			params.push(RouteHandler.populateRequestParameter(req, param));
+		}
+
+		return params;
+	}
+
+	private static populateRequestParameter(req: Request, param: ParamInfo) {
+		if (req.params.hasOwnProperty(param.name)) {
+			return req.params[param.name];
+		}
+
+		if (req.query.hasOwnProperty(param.name)) {
+			return req.query[param.name];
+		}
+
+		return undefined;
+	}
+}
+
+interface FilterFunction {
+	(filter: ActionFilter): Function;
 }
 
 function removeTrailingSlashes(input: string) {
-    return input.replace(/\/+$/, '');
+	return input.replace(/\/+$/, '');
 }
 
 function addLeadingSlash(input: string) {
-    return input.replace(/^[^\/]/, '/');
+	return input.replace(/^[^\/]/, '/');
 }
 
 interface ParamInfo {
-    name: string,
-    type: any
+	name: string,
+	type: any
 }
 
 let STRIP_COMMENTS = /(\/\/.*$)|(\/\*[\s\S]*?\*\/)|(\s*=[^,\)]*(('(?:\\'|[^'\r\n])*')|("(?:\\"|[^"\r\n])*"))|(\s*=[^,\)]*))/mg;
 let ARGUMENT_NAMES = /([^\s,]+)/g;
 
 function getParameterNames(func: Function) {
-    let fnStr = func.toString().replace(STRIP_COMMENTS, '');
-    let result = fnStr.slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')')).match(ARGUMENT_NAMES);
-    if (result === null)
-        result = [];
-    return result;
+	let fnStr = func.toString().replace(STRIP_COMMENTS, '');
+	let result = fnStr.slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')')).match(ARGUMENT_NAMES);
+	if (result === null)
+		result = [];
+	return result;
 }
