@@ -13,9 +13,16 @@ export class ExpressApp {
         this.app.use(json());
     }
 
-    public start() {
+    public init() {
         RouteRegistry.registerRoutesToApp(this.app);
+    }
+
+    public start() {
         let port = SiteConfig.SitePort;
         this.app.listen(port);
+    }
+
+    public getExpressApp() {
+        return this.app;
     }
 }

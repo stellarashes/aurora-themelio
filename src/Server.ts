@@ -1,14 +1,22 @@
+import {Application} from "express";
 import {ExpressApp} from "./core/ExpressApp";
 import {Initializer} from "./Initializer";
 
 export class Server {
-    public static async start() {
-        try {
-            await Initializer.run();
-            let app = new ExpressApp();
-            app.start();
-        } catch (e) {
-            console.error(e);
-        }
-    }
+	private static app: ExpressApp;
+
+	public static async init() {
+		await Initializer.run();
+		Server.app = new ExpressApp();
+		Server.app.init();
+	}
+
+	public static async start() {
+		await Server.init();
+		Server.app.start();
+	}
+
+	public static getApp(): Application {
+		return Server.app.getExpressApp();
+	}
 }

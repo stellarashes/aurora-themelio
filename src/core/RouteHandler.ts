@@ -60,7 +60,7 @@ export class RouteHandler {
 	private validate() {
 		let returnType = Reflect.getMetadata('design:returntype', this.data.controller, this.data.handler);
 		if (returnType !== Promise) {
-			console.warn("Handler on " + this.data.controller.constructor.name + "." + this.data.handler + " is not marked async");
+			console.warn("Handler on " + this.data.controller.constructor.name + "." + this.data.handler + " is not marked async or typescript version is too old");
 		}
 	}
 
@@ -169,12 +169,17 @@ export class RouteHandler {
 	}
 
 	private static populateRequestParameter(req: Request, param: ParamInfo) {
-		if (req.params.hasOwnProperty(param.name)) {
-			return req.params[param.name];
+		var paramName = param.name;
+		if (req.params.hasOwnProperty(paramName)) {
+			return req.params[paramName];
 		}
 
-		if (req.query.hasOwnProperty(param.name)) {
-			return req.query[param.name];
+		if (req.query.hasOwnProperty(paramName)) {
+			return req.query[paramName];
+		}
+
+		if (req.hasOwnProperty(paramName)) {
+			return req[paramName];
 		}
 
 		return undefined;

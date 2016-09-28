@@ -18,7 +18,7 @@ export class RouteRegistry {
     }
 
     public static setHandlerPath(controller: any, handler: string, path: string) {
-        this.updateRouteData(controller, handler, x => x.handlerPath = path);
+        this.updateRouteData(controller, handler, x => {x.handlerPath = path; return x;});
     }
 
     public static setCRUD(controller: any, handler: string, model: typeof DataModel) {
@@ -52,8 +52,8 @@ export class RouteRegistry {
     public static setHandlerMethod(controller: any, handler: string, method: string) {
         this.updateRouteData(controller, handler, x => {
             let methods = x.methods || [];
-            if (methods.filter(x => x.toLowerCase() === method.toLowerCase()).length === 0) {
-                methods.push(method);
+            if (!methods.find(x => x.toLowerCase() === method.toLowerCase())) {
+                methods.unshift(method);
             }
             return Object.assign(x, {
                 controller: controller,

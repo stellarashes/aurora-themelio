@@ -33,7 +33,7 @@ export class DataModel extends Model {
     }
 
     static create(values?: Object, options?: CreateOptions) {
-        options = this.addIncludesToTargetOptions(this, options, (x, v) => v.hasOwnProperty(x.property), values);
+        options = this.addIncludesToTargetOptions(this, options, (x, v) => v.hasOwnProperty(x.property), values || {});
         return super.create(values, options);
     }
 
