@@ -3,6 +3,7 @@ import {Application} from "express";
 import {RouteRegistry} from "./RouteRegistry";
 import {SiteConfig} from "../SiteConfig";
 import {json} from "body-parser";
+import {ServerOptions} from "../Server";
 
 export class ExpressApp {
     private app: Application;
@@ -13,7 +14,12 @@ export class ExpressApp {
         this.app.use(json());
     }
 
-    public init() {
+    public init(params?: ServerOptions) {
+        if (params && params.middlewares) {
+            for (let middleware of params.middlewares) {
+                this.app.use(middleware);
+            }
+        }
         RouteRegistry.registerRoutesToApp(this.app);
     }
 
