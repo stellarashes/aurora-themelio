@@ -81,6 +81,16 @@ export class DataModel extends Model {
             return delegate(relation, qualifyingValue);
         }
     }
+
+    public toJSON() {
+        let excluded = ['hasPrimaryKeys', 'dataValues', 'isNewRecord'];
+        let obj = {};
+        Object.getOwnPropertyNames(this)
+            .filter(x => excluded.indexOf(x) === -1 && !x.match(/^_/))
+            .forEach(x => obj[x] = this[x], this);
+
+        return obj;
+    }
 }
 
 interface ShouldAddInclude {
