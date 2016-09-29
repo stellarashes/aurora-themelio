@@ -16,6 +16,7 @@ export class ActionResultRenderer {
 			} else if (context.error instanceof ForbiddenError) {
 				context.httpContext.response.status(403).end();
 			} else {
+				console.error(context.error);
 				context.httpContext.response.status(500).end();
 			}
 			return Promise.resolve('');
