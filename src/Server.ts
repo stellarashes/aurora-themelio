@@ -8,8 +8,14 @@ export class Server {
 
 	public static async init(params?: ServerOptions) {
 		await Initializer.run();
-		Server.app = new ExpressApp();
-		Server.app.init(params);
+
+		try {
+			Server.app = new ExpressApp();
+			Server.app.init(params);
+		} catch (e) {
+			console.error(e);
+			throw e;
+		}
 	}
 
 	public static async start(params?: ServerOptions) {

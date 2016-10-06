@@ -89,28 +89,27 @@ export class RouteRegistry {
     private static mergeData(startRoute: RouteData, additions: any): RouteData {
         let methods = [];
         if (additions.methods) {
-            methods = startRoute.methods;
+            methods = startRoute.methods || [];
             for (let method of additions.methods) {
-                if (!method.find(x => x.toLowerCase() === method.toLowerCase())) {
+                if (!methods.find(x => x.toLowerCase() === method.toLowerCase())) {
                     methods.unshift(method);
                 }
             }
+            additions.methods = methods;
         }
 
         let filters = [];
         if (additions.filters) {
-            filters = startRoute.filters;
+            filters = startRoute.filters || [];
             for (let filter of additions.filters) {
                 if (!filters.find(x => x === filter)) {
                     filters.push(filter);
                 }
             }
+            additions.filters = filters;
         }
 
-        return Object.assign(startRoute, {
-            filters: filters,
-            methods: methods,
-        });
+        return Object.assign(startRoute, additions);
     }
 
     private static findOrCreateEntry(controller: any, handler: string) {
@@ -125,8 +124,8 @@ export class RouteRegistry {
         for (let route of RouteRegistry.handlerMethods) {
             let baseData = this.getControllerData(route.controller);
             let routeData = this.getRouteData(route.controller, route.handler);
-
-            let wrappedHandler = handlerFactory.getRouteHandler(this.mergeData(baseData, routeData));
+            let finalRouteData = this.mergeData(baseData, routeData);
+            let wrappedHandler = handlerFactory.getRouteHandler(finalRouteData);
 
             wrappedHandler.registerRoutes(app);
         }
