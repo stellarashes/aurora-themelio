@@ -1,6 +1,6 @@
 export abstract class CacheService {
-    abstract async get(key: string);
-    abstract async set(key: string, value: any);
-    abstract async expire(key: string, seconds: number);
-    abstract async exists(key: string);
+    abstract async get(key: string): Promise<any>;
+    abstract async set(key: string, value: any): Promise<any>;
+    abstract async expire(key: string, seconds: number): Promise<any>;
+    abstract async exists(key: string): Promise<any>;
 }
