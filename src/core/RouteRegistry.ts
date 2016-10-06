@@ -5,6 +5,7 @@ import {CacheConditionDelegate} from "../decorators/Cache";
 import {RouteHandlerFactory} from "./factory/RouteHandlerFactory";
 import {Container} from "typescript-ioc";
 import {RouteData} from "./RouteData";
+import {ActionFilter} from "../filters/ActionFilter";
 
 const routeMetaKey = Symbol('controller:route');
 const basePathMetaKey = 'controller:basePath';
@@ -14,7 +15,7 @@ export class RouteRegistry {
     private static handlerMethods: Set<RegistryEntry> = new Set<RegistryEntry>();
 
     public static setControllerBasePath(controller: any, path: string) {
-        Reflect.defineMetadata(basePathMetaKey, path, controller);
+        RouteRegistry.updateControllerData(controller, x => Object.assign(x, {basePath: path}));
     }
 
     public static setHandlerPath(controller: any, handler: string, path: string) {
@@ -39,7 +40,17 @@ export class RouteRegistry {
         }));
     }
 
-    public static updateRouteData(controller: any, handler: string, delegate: RouteUpdateDelegate) {
+    private static updateControllerData(controller: any, delegate: RouteUpdateDelegate) {
+        let controllerData = RouteRegistry.getControllerData(controller);
+        let modifiedData = delegate(controllerData);
+        Reflect.defineMetadata(basePathMetaKey, modifiedData || controllerData, controller);
+    }
+
+    private static getControllerData(controller: any) {
+        return Reflect.getMetadata(basePathMetaKey, controller) || {};
+    }
+
+    private static updateRouteData(controller: any, handler: string, delegate: RouteUpdateDelegate) {
         let routeData = this.getRouteData(controller, handler);
         routeData = delegate(routeData);
         Reflect.defineMetadata(routeMetaKey, routeData, controller, handler);
@@ -51,17 +62,55 @@ export class RouteRegistry {
 
     public static setHandlerMethod(controller: any, handler: string, method: string) {
         this.updateRouteData(controller, handler, x => {
-            let methods = x.methods || [];
-            if (!methods.find(x => x.toLowerCase() === method.toLowerCase())) {
-                methods.unshift(method);
-            }
-            return Object.assign(x, {
+            return this.mergeData(x, {
                 controller: controller,
                 handler: handler,
-                methods: methods
+                methods: [method]
             });
         });
         this.findOrCreateEntry(controller, handler);
+    }
+
+    public static setControllerFilter(controller: any, filter: ActionFilter) {
+        this.updateControllerData(controller, x => this.mergeData(x, {filters: [filter]}));
+    }
+
+    public static setHandlerFilter(controller: any, handler: string, filter: ActionFilter) {
+        this.updateRouteData(controller, handler, x => {
+            return this.mergeData(x, {
+                controller: controller,
+                handler: handler,
+                filters: [filter]
+            });
+        });
+        this.findOrCreateEntry(controller, handler);
+    }
+
+    private static mergeData(startRoute: RouteData, additions: any): RouteData {
+        let methods = [];
+        if (additions.methods) {
+            methods = startRoute.methods;
+            for (let method of additions.methods) {
+                if (!method.find(x => x.toLowerCase() === method.toLowerCase())) {
+                    methods.unshift(method);
+                }
+            }
+        }
+
+        let filters = [];
+        if (additions.filters) {
+            filters = startRoute.filters;
+            for (let filter of additions.filters) {
+                if (!filters.find(x => x === filter)) {
+                    filters.push(filter);
+                }
+            }
+        }
+
+        return Object.assign(startRoute, {
+            filters: filters,
+            methods: methods,
+        });
     }
 
     private static findOrCreateEntry(controller: any, handler: string) {
@@ -74,17 +123,13 @@ export class RouteRegistry {
     public static registerRoutesToApp(app: Application) {
         let handlerFactory = Container.get(RouteHandlerFactory);
         for (let route of RouteRegistry.handlerMethods) {
-            let basePath = this.getBasePath(route.controller);
+            let baseData = this.getControllerData(route.controller);
             let routeData = this.getRouteData(route.controller, route.handler);
-            routeData.basePath = basePath;
-            let wrappedHandler = handlerFactory.getRouteHandler(routeData);
+
+            let wrappedHandler = handlerFactory.getRouteHandler(this.mergeData(baseData, routeData));
 
             wrappedHandler.registerRoutes(app);
         }
-    }
-
-    private static getBasePath(controller: any) {
-        return Reflect.getMetadata(basePathMetaKey, controller) || '';
     }
 }
 
@@ -95,5 +140,5 @@ interface RegistryEntry {
 
 
 export interface RouteUpdateDelegate {
-    (previous: RouteData): void;
+    (previous: RouteData): RouteData;
 }

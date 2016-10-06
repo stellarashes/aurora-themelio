@@ -1,6 +1,7 @@
 import {Application} from "express";
 import {ExpressApp} from "./core/ExpressApp";
 import {Initializer} from "./Initializer";
+import {ActionFilter} from "./filters/ActionFilter";
 
 export class Server {
 	private static app: ExpressApp;
@@ -22,5 +23,6 @@ export class Server {
 }
 
 export interface ServerOptions {
-	middlewares: any[]
+	middlewares: any[],
+	globalFilters: ActionFilter[],
 }

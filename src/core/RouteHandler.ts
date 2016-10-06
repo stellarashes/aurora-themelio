@@ -96,18 +96,20 @@ export class RouteHandler {
 			actionExecutingContext = this.contextFactory.createActionExecutingContext(req, res, this.data, params, isCached);
 			await this.invokeFilters(x => x.onActionExecuting, actionExecutingContext);
 
-			try {
-				if (!isCached) {
-					if (this.data.CRUD) {
-						let crudHandler = this.crudHandlerFactory.getHandler(req, this.data.CRUD);
-						result = await crudHandler.handleCRUD();
-					}
+			if (!actionExecutingContext.cancelAction) {
+				try {
+					if (!isCached) {
+						if (this.data.CRUD) {
+							let crudHandler = this.crudHandlerFactory.getHandler(req, this.data.CRUD);
+							result = await crudHandler.handleCRUD();
+						}
 
-					let controllerResponse = await handler.apply(instance, params);
-					result = controllerResponse || result || '';    // prioritize handler response; if handler has no response, use CRUD response if available
+						let controllerResponse = await handler.apply(instance, params);
+						result = controllerResponse || result || '';    // prioritize handler response; if handler has no response, use CRUD response if available
+					}
+				} catch (e) {
+					actionExecutingContext.error = e;
 				}
-			} catch (e) {
-				actionExecutingContext.error = e;
 			}
 
 			let actionExecutedContext = this.contextFactory.createActionExecutedContext(actionExecutingContext, result);

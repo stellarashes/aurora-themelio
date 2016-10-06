@@ -4,4 +4,4 @@ export * from "./Cache";
 export * from "./HTTPVerbs";
 export * from "./Path";
 export * from "./CRUD";
-export * from "./Dequeues";
+export * from "./Filter";
