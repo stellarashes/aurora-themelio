@@ -1,7 +1,7 @@
 import {DataModel} from "../../core/data/DataModel";
 import {HasOneOptions} from "~sequelize/lib/associations/has-one";
 import {HasManyOptions} from "~sequelize/lib/associations/has-many";
-import {DatabaseConnector} from "../../core/data/DatabaseConnector";
+import {Database} from "../../core/data/Database";
 import {ModelRelation} from "../../core/data/ModelRelation";
 import {BelongsToManyOptions} from "~sequelize/lib/associations/belongs-to-many";
 
@@ -26,7 +26,7 @@ function hasAssociation(type: string, targetModel: typeof DataModel, params: Has
             type: type
         };
         updateRelation(relation.source, relation);
-        DatabaseConnector.addRelation(relation);
+        Database.addRelation(relation);
     };
 }
 

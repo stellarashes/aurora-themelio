@@ -1,5 +1,5 @@
 import {DataTypes, ModelAttributeColumnOptions, ModelOptions, ModelAttributes} from "sequelize";
-import {DatabaseConnector} from "../../core/data/DatabaseConnector";
+import {Database} from "../../core/data/Database";
 import {DataModel} from "../../core/data/DataModel";
 import {SiteConfig} from "../../SiteConfig";
 
@@ -41,7 +41,7 @@ export function Table(options?: ModelOptions) {
         let columnOptions: ModelAttributes = getModelAttributes(target.prototype) || {};
         columnOptions = addPKIfMissingAndEnabled(columnOptions);
         Reflect.defineMetadata(columnMetaKey, columnOptions, target.prototype);
-        DatabaseConnector.defineType(target, options || {}, columnOptions);
+        Database.defineType(target, options || {}, columnOptions);
     };
 }
 

@@ -2,9 +2,10 @@ import {Sequelize, ModelAttributes} from "sequelize";
 import {SiteConfig} from "../../SiteConfig";
 import {DataModel} from "./DataModel";
 import {ModelRelation} from "./ModelRelation";
+import {TransactionOptions, Transaction} from "sequelize";
 
 
-export class DatabaseConnector {
+export class Database {
     private static instance: Sequelize;
     private static relations: ModelRelation[] = [];
 
@@ -30,6 +31,10 @@ export class DatabaseConnector {
 
     public static addRelation(relation: ModelRelation) {
         this.relations.push(relation);
+    }
+
+    public static getTransaction(options?: TransactionOptions) {
+        return Promise.all([this.instance.transaction(options)]);
     }
 
     public static linkAllRelations() {
