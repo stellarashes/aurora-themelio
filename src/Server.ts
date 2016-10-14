@@ -29,6 +29,6 @@ export class Server {
 }
 
 export interface ServerOptions {
-	middlewares: any[],
-	globalFilters: ActionFilter[],
+	middlewares?: any[],
+	globalFilters?: ActionFilter[],
 }
