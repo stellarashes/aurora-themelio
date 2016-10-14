@@ -109,7 +109,7 @@ export class RouteRegistry {
             additions.filters = filters;
         }
 
-        return Object.assign(startRoute, additions);
+        return Object.assign({}, startRoute, additions);
     }
 
     private static findOrCreateEntry(controller: any, handler: string) {
