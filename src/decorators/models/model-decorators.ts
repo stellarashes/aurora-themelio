@@ -1,17 +1,16 @@
-import {DataTypes, ModelAttributeColumnOptions, ModelOptions, ModelAttributes} from "sequelize";
+import {ModelAttributeColumnOptions, ModelOptions, ModelAttributes} from "sequelize";
 import {Database} from "../../core/data/Database";
 import {DataModel} from "../../core/data/DataModel";
 import {SiteConfig} from "../../SiteConfig";
+import snakeCase = require("snake-case");
+import {ColumnModifications} from "../../core/data/ColumnModifications";
+import {DataTypes} from "sequelize";
 
 const columnMetaKey = Symbol('data:property-attributes');
-const typeMetaKey = 'design:type';
 
-export function Column(options?: string | DataTypes.DataType | ModelAttributeColumnOptions) {
+export function Column(options?: ModelAttributeColumnOptions) {
     return function (target: any, key: string) {
-        if (!options) {
-            let propertyType = Reflect.getMetadata(typeMetaKey, target, key);
-            options = getDataTypeByPropertyType(target, key, propertyType);
-        }
+        options = ColumnModifications.modifyColumnOptions(options, target, key);
 
         let columnOptions = getModelAttributes(target) || {};
         columnOptions[key] = options;
@@ -19,26 +18,21 @@ export function Column(options?: string | DataTypes.DataType | ModelAttributeCol
     }
 }
 
-let propertyTypeMapping = {
-    "String": DataTypes.STRING,
-    "Number": DataTypes.INTEGER,
-    "Date": DataTypes.DATE,
-    "Boolean": DataTypes.BOOLEAN,
-};
-
-function getDataTypeByPropertyType(target, key, propertyType) {
-    let name;
-    if (propertyType && (name = propertyType.name)) {
-        if (propertyTypeMapping.hasOwnProperty(name)) {
-            return propertyTypeMapping[name];
-        }
-    }
-    throw new Error('Could not automatically determine the type of ' + target + '.' + key + ' (' + propertyType.name + ')');
-}
 
 export function Table(options?: ModelOptions) {
     return function (target: typeof DataModel) {
         let columnOptions: ModelAttributes = getModelAttributes(target.prototype) || {};
+        if (options.underscored) {
+            let columnOptionsSnakeCased: ModelAttributes = {};
+            for (let key in columnOptions) {
+                if (columnOptions.hasOwnProperty(key)) {
+                    let snakeCaseKey = snakeCase(key);
+                    columnOptionsSnakeCased[snakeCaseKey] = columnOptions[key];
+                }
+            }
+
+            columnOptions = columnOptionsSnakeCased;
+        }
         columnOptions = addPKIfMissingAndEnabled(columnOptions);
         Reflect.defineMetadata(columnMetaKey, columnOptions, target.prototype);
         Database.defineType(target, options || {}, columnOptions);
@@ -61,7 +55,9 @@ function addPKIfMissingAndEnabled(columnOptions: ModelAttributes) {
         }
 
         if (!hasPK) {
-            columnOptions[SiteConfig.DatabaseDefaultPKName] = SiteConfig.DatabaseDefaultPKOptions;
+            let optionsWithPK = {};
+            optionsWithPK[SiteConfig.DatabaseDefaultPKName] = SiteConfig.DatabaseDefaultPKOptions;
+            return Object.assign(optionsWithPK, columnOptions);
         }
     }
 

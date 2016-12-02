@@ -17,7 +17,8 @@ export class SiteConfig {
 
     public static DatabaseModelDefaultPK: boolean = true;
     public static DatabaseDefaultPKName: string = 'id';
-    public static DatabaseDefaultPKOptions: string | DataTypes.DataType | ModelAttributeColumnOptions = {
+    public static DatabaseColumnDefaultNotNull: boolean = true;
+    public static DatabaseDefaultPKOptions: ModelAttributeColumnOptions = {
         primaryKey: true,
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4

@@ -22,7 +22,8 @@
     "mysql2": "^1.0.0",
     "node-uuid": "^1.4.7",
     "redis": "^2.6.2",
-    "sequelize": "^4.0.0-1"
+    "sequelize": "^4.0.0-1",
+    "snake-case": "^2.1.0"
   },
   "devDependencies": {
     "typescript": "^2.0.2",
