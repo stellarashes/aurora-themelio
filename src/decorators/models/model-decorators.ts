@@ -22,7 +22,7 @@ export function Column(options?: ModelAttributeColumnOptions) {
 export function Table(options?: ModelOptions) {
     return function (target: typeof DataModel) {
         let columnOptions: ModelAttributes = getModelAttributes(target.prototype) || {};
-        if (options.underscored) {
+        if (options && options.underscored) {
             let columnOptionsSnakeCased: ModelAttributes = {};
             for (let key in columnOptions) {
                 if (columnOptions.hasOwnProperty(key)) {

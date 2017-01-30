@@ -11,7 +11,6 @@ export class RedisCacheService extends CacheService {
 
     constructor() {
         super();
-        this.init();
     }
 
     async exists(key: string): Promise<any> {
