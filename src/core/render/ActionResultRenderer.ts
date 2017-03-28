@@ -1,6 +1,7 @@
 import {ArgumentError} from "../exceptions/ArgumentError";
 import {ResultExecutingContext} from "../../filters/context/ResultExecutingContext";
 import {ForbiddenError} from "../exceptions/ForbiddenError";
+import {BaseResultType} from "./result-types/BaseResultType";
 
 /**
  * Default renderer for action result; will simply JSON.stringify result
@@ -17,12 +18,17 @@ export class ActionResultRenderer {
 				context.httpContext.response.status(403).end();
 			} else {
 				console.error(context.error);
+				console.error(context.error.stack);
 				context.httpContext.response.status(500).end();
 			}
 			return Promise.resolve('');
 		} else {
-			context.httpContext.response.json(context.result);
-			return Promise.resolve(JSON.stringify(context.result));
+			if (context.result instanceof BaseResultType) {
+				context.result.render(context.httpContext);
+			} else {
+				context.httpContext.response.json(context.result);
+			}
+			return Promise.resolve(context.result);
 		}
 	}
 }
