@@ -6,23 +6,24 @@ const typeMetaKey = 'design:type';
 
 export class ColumnModifications {
 	public static modifyColumnOptions(options: ModelAttributeColumnOptions, target: any, key: string) {
-		if (!options || !options.type) {
+		let copy = Object.assign({}, options);
+		if (!copy || !copy.type) {
 			let propertyType = Reflect.getMetadata(typeMetaKey, target, key);
 			let defaultType = getDataTypeByPropertyType(target, key, propertyType);
-			if (!options) {
-				options = {
+			if (!copy) {
+				copy = {
 					type: defaultType
 				};
 			} else {
-				options.type = getDataTypeByPropertyType(target, key, propertyType);
+				copy.type = getDataTypeByPropertyType(target, key, propertyType);
 			}
 		}
 
-		if (SiteConfig.DatabaseColumnDefaultNotNull && (!options || typeof(options.allowNull) === 'undefined')) {
-			options.allowNull = false;
+		if (SiteConfig.DatabaseColumnDefaultNotNull && (!copy || typeof(copy.allowNull) === 'undefined')) {
+			copy.allowNull = false;
 		}
 
-		return options;
+		return copy;
 	}
 }
 
