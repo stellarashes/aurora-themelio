@@ -2,7 +2,6 @@ import {getModelAttributes} from "../../decorators/models/model-decorators";
 import {CreateOptions, Model, Promise, FindOptions} from "sequelize";
 import {getModelRelations} from "../../decorators/models/relations";
 import {ModelRelation} from "./ModelRelation";
-import * as Bluebird from "~sequelize~bluebird";
 
 export class DataModel extends Model {
 
@@ -33,12 +32,12 @@ export class DataModel extends Model {
         return DataModel.getPKValuesFromObject(this);
     }
 
-    static create(values?: Object, options?: CreateOptions) {
+    static create(values?: Object, options?: CreateOptions): Promise<Model> {
         options = this.addIncludesToTargetOptions(this, options, (x, v) => v.hasOwnProperty(x.property), values || {});
         return super.create(values, options);
     }
 
-    static findAll(options?: FindOptions) {
+    static findAll(options?: FindOptions): Promise<Model[]> {
         options = this.addIncludesToTargetOptions(this, options, x => x.eager);
         return super.findAll(options);
     }
