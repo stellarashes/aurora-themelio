@@ -3,6 +3,7 @@ import {SiteConfig} from "../../SiteConfig";
 import {DataModel} from "./DataModel";
 import {ModelRelation} from "./ModelRelation";
 import {TransactionOptions, Transaction} from "sequelize";
+import * as Bluebird from "~sequelize~bluebird";
 
 
 export class Database {
