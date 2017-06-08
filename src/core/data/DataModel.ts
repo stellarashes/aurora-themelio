@@ -2,6 +2,7 @@ import {getModelAttributes} from "../../decorators/models/model-decorators";
 import {CreateOptions, Model, Promise, FindOptions} from "sequelize";
 import {getModelRelations} from "../../decorators/models/relations";
 import {ModelRelation} from "./ModelRelation";
+import * as Bluebird from "~sequelize~bluebird";
 
 export class DataModel extends Model {
 
