@@ -32,8 +32,8 @@ export class Database {
         this.relations.push(relation);
     }
 
-    public static getTransaction(options?: TransactionOptions) {
-        return Promise.all([this.instance.transaction(options)]);
+    public static getTransaction(options?: TransactionOptions): Promise<any> {
+        return this.instance.transaction(options);
     }
 
     public static linkAllRelations() {
