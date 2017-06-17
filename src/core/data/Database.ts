@@ -32,10 +32,6 @@ export class Database {
         this.relations.push(relation);
     }
 
-    public static getTransaction(options?: TransactionOptions): Promise<any> {
-        return this.instance.transaction(options);
-    }
-
     public static linkAllRelations() {
         for (let relation of this.relations) {
             relation.source[relation.type].call(relation.source, relation.target, relation.params);
